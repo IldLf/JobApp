@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная - Job Board</title>
+    <link rel="stylesheet" href="../styles/JobsRealMain.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Хедер -->
+        <header class="header">
+            <div class="logo">JOB BOARD</div>
+            <div class="nav-links">
+                <a href="JobsRealMain.html" class="nav-link active">Главная</a>
+                <a href="JobsAccount.html" class="nav-link">Личный кабинет</a>
+                <a href="JobsMain.html" class="nav-link">Поиск</a>
+            </div>
+            <div class="auth-buttons">
+                <a href="JobsLoginRegister.html" class="nav-link btn-outline">Войти</a>
+                <a href="JobsLoginRegister.html" class="nav-link btn-outline">Регистрация</a>
+            </div>
+        </header>
+
+        <!-- Hero секция -->
+        <div class="hero-section">
+            <h1 class="hero-title">Найди работу своей мечты</h1>
+            <p class="hero-subtitle">Тысячи вакансий в IT, финансах, маркетинге и других сферах</p>
+            
+            <!-- Быстрый поиск -->
+            <div class="hero-search">
+                <input type="text" class="hero-search-input" placeholder="Должность, навыки или компания">
+                <button class="hero-search-btn">Найти</button>
+            </div>
+            
+            <!-- Популярные запросы -->
+            <div class="popular-searches">
+                <span class="popular-searches-label">Популярно:</span>
+                <a href="#" class="popular-search-tag">Python разработчик</a>
+                <a href="#" class="popular-search-tag">Аналитик данных</a>
+                <a href="#" class="popular-search-tag">UX/UI дизайнер</a>
+                <a href="#" class="popular-search-tag">Project Manager</a>
+            </div>
+        </div>
+
+        <!-- Преимущества -->
+        <div class="features-section">
+            <h2 class="section-title">Почему выбирают нас</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3 class="feature-title">Тысячи вакансий</h3>
+                    <p class="feature-description">Ежедневно публикуются новые вакансии от ведущих компаний</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Быстрый отклик</h3>
+                    <p class="feature-description">Откликайтесь в один клик, отслеживайте статус в личном кабинете</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">Умный поиск</h3>
+                    <p class="feature-description">Точные фильтры и рекомендации на основе вашего опыта</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Безопасность</h3>
+                    <p class="feature-description">Ваши данные надежно защищены</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Популярные категории -->
+        <div class="categories-section">
+            <h2 class="section-title">Популярные категории</h2>
+            <div class="categories-grid">
+                <a href="#" class="category-card">
+                    <div class="category-icon">💻</div>
+                    <div class="category-name">IT и разработка</div>
+                    <div class="category-count">1 247 вакансий</div>
+                </a>
+                <a href="#" class="category-card">
+                    <div class="category-icon">📊</div>
+                    <div class="category-name">Аналитика данных</div>
+                    <div class="category-count">856 вакансий</div>
+                </a>
+                <a href="#" class="category-card">
+                    <div class="category-icon">🎨</div>
+                    <div class="category-name">Дизайн</div>
+                    <div class="category-count">432 вакансии</div>
+                </a>
+                <a href="#" class="category-card">
+                    <div class="category-icon">📈</div>
+                    <div class="category-name">Маркетинг</div>
+                    <div class="category-count">654 вакансии</div>
+                </a>
+                <a href="#" class="category-card">
+                    <div class="category-icon">💰</div>
+                    <div class="category-name">Финансы</div>
+                    <div class="category-count">321 вакансия</div>
+                </a>
+                <a href="#" class="category-card">
+                    <div class="category-icon">👥</div>
+                    <div class="category-name">HR и управление</div>
+                    <div class="category-count">287 вакансий</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Рекомендуемые вакансии -->
+        <div class="featured-vacancies-section">
+            <h2 class="section-title">Рекомендуемые вакансии</h2>
+            <div class="vacancies-grid">
+                <!-- Вакансия 1 -->
+                <div class="vacancy-card">
+                    <div class="vacancy-header">
+                        <span class="vacancy-title">Senior Python разработчик</span>
+                        <span class="vacancy-salary">300 000 - 400 000 ₽</span>
+                    </div>
+                    <div class="vacancy-company">Яндекс • Москва</div>
+                    <div class="vacancy-description">
+                        Разработка высоконагруженных сервисов, оптимизация производительности.
+                    </div>
+                    <div class="vacancy-tags">
+                        <span class="vacancy-tag">Python</span>
+                        <span class="vacancy-tag">Django</span>
+                        <span class="vacancy-tag">PostgreSQL</span>
+                    </div>
+                    <button class="response-btn">Откликнуться</button>
+                </div>
+
+                <!-- Вакансия 2 -->
+                <div class="vacancy-card">
+                    <div class="vacancy-header">
+                        <span class="vacancy-title">Frontend разработчик (React)</span>
+                        <span class="vacancy-salary">250 000 - 350 000 ₽</span>
+                    </div>
+                    <div class="vacancy-company">Ozon • Москва</div>
+                    <div class="vacancy-description">
+                        Разработка интерфейсов для личного кабинета и административной панели.
+                    </div>
+                    <div class="vacancy-tags">
+                        <span class="vacancy-tag">React</span>
+                        <span class="vacancy-tag">TypeScript</span>
+                        <span class="vacancy-tag">Redux</span>
+                    </div>
+                    <button class="response-btn">Откликнуться</button>
+                </div>
+
+                <!-- Вакансия 3 -->
+                <div class="vacancy-card">
+                    <div class="vacancy-header">
+                        <span class="vacancy-title">Data Scientist</span>
+                        <span class="vacancy-salary">280 000 - 380 000 ₽</span>
+                    </div>
+                    <div class="vacancy-company">Сбер • Москва</div>
+                    <div class="vacancy-description">
+                        Разработка моделей машинного обучения для кредитного скоринга.
+                    </div>
+                    <div class="vacancy-tags">
+                        <span class="vacancy-tag">Python</span>
+                        <span class="vacancy-tag">ML</span>
+                        <span class="vacancy-tag">SQL</span>
+                    </div>
+                    <button class="response-btn">Откликнуться</button>
+                </div>
+
+                <!-- Вакансия 4 -->
+                <div class="vacancy-card">
+                    <div class="vacancy-header">
+                        <span class="vacancy-title">DevOps инженер</span>
+                        <span class="vacancy-salary">260 000 - 360 000 ₽</span>
+                    </div>
+                    <div class="vacancy-company">Wildberries • Москва</div>
+                    <div class="vacancy-description">
+                        Поддержка и развитие инфраструктуры, CI/CD, мониторинг.
+                    </div>
+                    <div class="vacancy-tags">
+                        <span class="vacancy-tag">Kubernetes</span>
+                        <span class="vacancy-tag">Docker</span>
+                        <span class="vacancy-tag">CI/CD</span>
+                    </div>
+                    <button class="response-btn">Откликнуться</button>
+                </div>
+            </div>
+            
+            <div class="centered">
+                <a href="JobsMain.html" class="btn btn-large">Смотреть все вакансии</a>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-section">
+            <div class="stat-item">
+                <div class="stat-number">15 000+</div>
+                <div class="stat-label">Вакансий</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">8 500+</div>
+                <div class="stat-label">Компаний</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">2 300+</div>
+                <div class="stat-label">Резюме</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">45 000+</div>
+                <div class="stat-label">Пользователей</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <h2 class="cta-title">Готовы начать поиск работы?</h2>
+            <p class="cta-subtitle">Создайте резюме и получайте предложения от ведущих компаний</p>
+            <a href="JobsLoginRegister.html" class="btn btn-large">Создать резюме</a>
+        </div>
+
+        <!-- Футер -->
+        <footer class="footer">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4 class="footer-title">Job Board</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link">О проекте</a></li>
+                        <li><a href="#" class="footer-link">Контакты</a></li>
+                        <li><a href="#" class="footer-link">Партнерам</a></li>
+                        <li><a href="#" class="footer-link">Помощь</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-title">Соискателям</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link">Поиск вакансий</a></li>
+                        <li><a href="#" class="footer-link">Создать резюме</a></li>
+                        <li><a href="#" class="footer-link">Советы по карьере</a></li>
+                        <li><a href="#" class="footer-link">Категории</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-title">Работодателям</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link">Разместить вакансию</a></li>
+                        <li><a href="#" class="footer-link">Поиск резюме</a></li>
+                        <li><a href="#" class="footer-link">Тарифы</a></li>
+                        <li><a href="#" class="footer-link">Кабинет работодателя</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-title">Контакты</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link">support@jobboard.ru</a></li>
+                        <li><a href="#" class="footer-link">8 (800) 123-45-67</a></li>
+                        <li><a href="#" class="footer-link">Telegram</a></li>
+                        <li><a href="#" class="footer-link">WhatsApp</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div>© 2026 Job Board. Все права защищены.</div>
+                <div>
+                    <a href="#" class="footer-bottom-link">Политика конфиденциальности</a>
+                    <a href="#" class="footer-bottom-link">Пользовательское соглашение</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Сообщение для демо-режима -->
+    <div id="message" class="message"></div>
+
+    <script src="../scripts/JobsRealMain.js"></script>
+</body>
+</html>
