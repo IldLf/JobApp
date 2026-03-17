@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная - Поиск работы</title>
+    <link rel="stylesheet" href="../styles/JobsMain.css">
+    <link rel="stylesheet" href="../styles/Header.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Хедер -->
+        <header class="header">
+            <div class="logo">JOB BOARD</div>
+            <div class="nav-links">
+                <a href="JobsRealMain.html" class="nav-link">Главная</a>
+                <a href="JobsAccount.html" class="nav-link">Личный кабинет</a>
+                <a href="JobsMain.html" class="nav-link active">Поиск</a>
+            </div>
+            <div class="user-info">
+                <span class="user-name">Иван Иванов</span>
+                <div class="user-avatar">ИИ</div>
+            </div>
+        </header>
+
+        <!-- Строка поиска -->
+        <div class="search-section">
+            <h2 class="search-title">Поиск вакансий и резюме</h2>
+            <input type="text" class="search-input" placeholder="Введите профессию, навыки или ключевые слова...">
+            <div class="search-hint">Например: Python разработчик, аналитик данных, дизайнер</div>
+        </div>
+
+        <!-- Два столбца -->
+        <div class="content-columns">
+            <!-- Фильтры -->
+            <div class="filters-section">
+                <h3 class="filters-title">Фильтры</h3>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Профессия</label>
+                    <select class="filter-select">
+                        <option value="">Все профессии</option>
+                        <option value="1">Python разработчик</option>
+                        <option value="2">Java разработчик</option>
+                        <option value="3">JavaScript разработчик</option>
+                        <option value="4">Frontend разработчик</option>
+                        <option value="5">Backend разработчик</option>
+                        <option value="6">Fullstack разработчик</option>
+                        <option value="7">DevOps инженер</option>
+                        <option value="8">Системный администратор</option>
+                        <option value="9">Аналитик данных</option>
+                        <option value="10">Data Scientist</option>
+                        <option value="11">Project Manager</option>
+                        <option value="12">Product Manager</option>
+                        <option value="13">UI/UX дизайнер</option>
+                        <option value="14">Графический дизайнер</option>
+                        <option value="15">Менеджер по продажам</option>
+                        <option value="16">HR менеджер</option>
+                        <option value="17">Тестировщик</option>
+                        <option value="18">Android разработчик</option>
+                        <option value="19">iOS разработчик</option>
+                        <option value="20">SEO специалист</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Город</label>
+                    <select class="filter-select">
+                        <option value="">Все города</option>
+                        <option value="Москва">Москва</option>
+                        <option value="Санкт-Петербург">Санкт-Петербург</option>
+                        <option value="Новосибирск">Новосибирск</option>
+                        <option value="Екатеринбург">Екатеринбург</option>
+                        <option value="Казань">Казань</option>
+                        <option value="Нижний Новгород">Нижний Новгород</option>
+                        <option value="Самара">Самара</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Опыт работы</label>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="exp-0"> 
+                        <label for="exp-0">Нет опыта</label>
+                    </div>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="exp-1"> 
+                        <label for="exp-1">1-3 года</label>
+                    </div>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="exp-2"> 
+                        <label for="exp-2">3-5 лет</label>
+                    </div>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="exp-3"> 
+                        <label for="exp-3">Более 5 лет</label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Зарплата</label>
+                    <div class="salary-range">
+                        <input type="number" class="filter-input" placeholder="От" min="0">
+                        <input type="number" class="filter-input" placeholder="До" min="0">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Тип занятости</label>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="type-full"> 
+                        <label for="type-full">Полная занятость</label>
+                    </div>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="type-part"> 
+                        <label for="type-part">Частичная занятость</label>
+                    </div>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="type-project"> 
+                        <label for="type-project">Проектная работа</label>
+                    </div>
+                    <div class="filter-checkbox">
+                        <input type="checkbox" id="type-intern"> 
+                        <label for="type-intern">Стажировка</label>
+                    </div>
+                </div>
+
+                <button class="apply-filters-btn">Применить фильтры</button>
+            </div>
+
+            <!-- Список вакансий/резюме -->
+            <div class="vacancies-section">
+                <div class="section-tabs">
+                    <button class="section-tab active" onclick="showVacancies()">Вакансии</button>
+                    <button class="section-tab" onclick="showResumes()">Резюме</button>
+                </div>
+
+                <!-- Список вакансий -->
+                <div id="vacancies-list" class="vacancies-list">
+                    <!-- Вакансия 1 -->
+                    <div class="vacancy-card">
+                        <div class="vacancy-header">
+                            <span class="vacancy-title">Python разработчик в Яндекс</span>
+                            <span class="vacancy-salary">200 000 - 350 000 ₽</span>
+                        </div>
+                        <div class="vacancy-company">Яндекс • Москва</div>
+                        <div class="vacancy-description">
+                            Разработка высоконагруженных сервисов на Python. Требуемый опыт: 3-5 лет.
+                        </div>
+                        <div class="vacancy-tags">
+                            <span class="vacancy-tag experience">3-5 лет</span>
+                            <span class="vacancy-tag type">full-time</span>
+                            <span class="vacancy-tag">Python</span>
+                            <span class="vacancy-tag">Django</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Вакансия 2 -->
+                    <div class="vacancy-card">
+                        <div class="vacancy-header">
+                            <span class="vacancy-title">Frontend разработчик (React)</span>
+                            <span class="vacancy-salary">150 000 - 250 000 ₽</span>
+                        </div>
+                        <div class="vacancy-company">Mail.ru Group • Москва</div>
+                        <div class="vacancy-description">
+                            Разработка интерфейсов на React. Опыт работы от 2 лет.
+                        </div>
+                        <div class="vacancy-tags">
+                            <span class="vacancy-tag experience">2-3 года</span>
+                            <span class="vacancy-tag type">full-time</span>
+                            <span class="vacancy-tag">React</span>
+                            <span class="vacancy-tag">Vue.js</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Вакансия 3 -->
+                    <div class="vacancy-card">
+                        <div class="vacancy-header">
+                            <span class="vacancy-title">Data Scientist</span>
+                            <span class="vacancy-salary">250 000 - 400 000 ₽</span>
+                        </div>
+                        <div class="vacancy-company">Сбер • Москва</div>
+                        <div class="vacancy-description">
+                            Разработка моделей машинного обучения. Опыт работы от 4 лет.
+                        </div>
+                        <div class="vacancy-tags">
+                            <span class="vacancy-tag experience">4-6 лет</span>
+                            <span class="vacancy-tag type">full-time</span>
+                            <span class="vacancy-tag">ML</span>
+                            <span class="vacancy-tag">Python</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Вакансия 4 -->
+                    <div class="vacancy-card">
+                        <div class="vacancy-header">
+                            <span class="vacancy-title">DevOps инженер</span>
+                            <span class="vacancy-salary">200 000 - 350 000 ₽</span>
+                        </div>
+                        <div class="vacancy-company">Ozon • Москва</div>
+                        <div class="vacancy-description">
+                            Поддержка инфраструктуры, CI/CD. Опыт работы от 3 лет.
+                        </div>
+                        <div class="vacancy-tags">
+                            <span class="vacancy-tag experience">3-5 лет</span>
+                            <span class="vacancy-tag type">full-time</span>
+                            <span class="vacancy-tag">Kubernetes</span>
+                            <span class="vacancy-tag">CI/CD</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Вакансия 5 -->
+                    <div class="vacancy-card">
+                        <div class="vacancy-header">
+                            <span class="vacancy-title">UX/UI дизайнер</span>
+                            <span class="vacancy-salary">130 000 - 220 000 ₽</span>
+                        </div>
+                        <div class="vacancy-company">Wildberries • Москва</div>
+                        <div class="vacancy-description">
+                            Проектирование интерфейсов для маркетплейса. Опыт работы от 2 лет.
+                        </div>
+                        <div class="vacancy-tags">
+                            <span class="vacancy-tag experience">2-4 года</span>
+                            <span class="vacancy-tag type">full-time</span>
+                            <span class="vacancy-tag">Figma</span>
+                            <span class="vacancy-tag">UI/UX</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Вакансия 6 -->
+                    <div class="vacancy-card">
+                        <div class="vacancy-header">
+                            <span class="vacancy-title">Java разработчик</span>
+                            <span class="vacancy-salary">180 000 - 300 000 ₽</span>
+                        </div>
+                        <div class="vacancy-company">Ozon • Москва</div>
+                        <div class="vacancy-description">
+                            Разработка бэкенда для маркетплейса. Опыт работы от 3 лет.
+                        </div>
+                        <div class="vacancy-tags">
+                            <span class="vacancy-tag experience">3-5 лет</span>
+                            <span class="vacancy-tag type">full-time</span>
+                            <span class="vacancy-tag">Java</span>
+                            <span class="vacancy-tag">Spring</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+                </div>
+
+                <!-- Список резюме (скрыт по умолчанию) -->
+                <div id="resumes-list" class="vacancies-list" style="display: none;">
+                    <!-- Резюме 1 -->
+                    <div class="resume-card">
+                        <div class="resume-name">Иван Иванов</div>
+                        <div class="resume-profession">Senior Python разработчик</div>
+                        <div class="resume-info">Москва • 5 лет опыта • 150 000 ₽</div>
+                        <div class="vacancy-description">
+                            Опытный Python разработчик, специализируюсь на веб-приложениях. МГУ, Прикладная математика.
+                        </div>
+                        <div class="resume-skills">
+                            <span class="resume-skill">Python</span>
+                            <span class="resume-skill">Django</span>
+                            <span class="resume-skill">FastAPI</span>
+                            <span class="resume-skill">SQL</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Резюме 2 -->
+                    <div class="resume-card">
+                        <div class="resume-name">Петр Петров</div>
+                        <div class="resume-profession">Frontend разработчик</div>
+                        <div class="resume-info">Санкт-Петербург • 3 года опыта • 120 000 ₽</div>
+                        <div class="vacancy-description">
+                            Frontend разработчик, React, Vue.js. ИТМО, Программная инженерия.
+                        </div>
+                        <div class="resume-skills">
+                            <span class="resume-skill">React</span>
+                            <span class="resume-skill">Vue.js</span>
+                            <span class="resume-skill">JavaScript</span>
+                            <span class="resume-skill">HTML/CSS</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Резюме 3 -->
+                    <div class="resume-card">
+                        <div class="resume-name">Анна Смирнова</div>
+                        <div class="resume-profession">Data Scientist</div>
+                        <div class="resume-info">Москва • 6 лет опыта • 200 000 ₽</div>
+                        <div class="vacancy-description">
+                            Data Scientist, машинное обучение и анализ данных. МФТИ, Прикладная математика и физика.
+                        </div>
+                        <div class="resume-skills">
+                            <span class="resume-skill">Python</span>
+                            <span class="resume-skill">ML</span>
+                            <span class="resume-skill">SQL</span>
+                            <span class="resume-skill">Pandas</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Резюме 4 -->
+                    <div class="resume-card">
+                        <div class="resume-name">Елена Козлова</div>
+                        <div class="resume-profession">UI/UX дизайнер</div>
+                        <div class="resume-info">Казань • 4 года опыта • 90 000 ₽</div>
+                        <div class="vacancy-description">
+                            UI/UX дизайнер, создаю удобные интерфейсы. КФУ, Дизайн.
+                        </div>
+                        <div class="resume-skills">
+                            <span class="resume-skill">Figma</span>
+                            <span class="resume-skill">UI/UX</span>
+                            <span class="resume-skill">Sketch</span>
+                            <span class="resume-skill">Adobe XD</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+
+                    <!-- Резюме 5 -->
+                    <div class="resume-card">
+                        <div class="resume-name">Дмитрий Соколов</div>
+                        <div class="resume-profession">Fullstack разработчик</div>
+                        <div class="resume-info">Новосибирск • 5 лет опыта • 160 000 ₽</div>
+                        <div class="vacancy-description">
+                            Fullstack разработчик, Python + JavaScript. НГУ, Информатика.
+                        </div>
+                        <div class="resume-skills">
+                            <span class="resume-skill">Python</span>
+                            <span class="resume-skill">JavaScript</span>
+                            <span class="resume-skill">Django</span>
+                            <span class="resume-skill">React</span>
+                        </div>
+                        <button class="response-btn" onclick="event.stopPropagation(); showResponseMessage()">Откликнуться</button>
+                    </div>
+                </div>
+
+                <div id="info-message" class="message info">
+                    Для просмотра полной информации войдите в личный кабинет
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../scripts/JobsMain.js"></script>
+</body>
+</html>

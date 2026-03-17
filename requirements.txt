@@ -1,0 +1,22 @@
+# Django
+Django==5.2.1
+asgiref==3.8.1
+sqlparse==0.5.3
+
+# API и документация
+djangorestframework==3.16.0
+drf-spectacular==0.28.0
+
+# Аутентификация
+djangorestframework-simplejwt==5.4.0
+django-allauth==65.4.0
+
+# База данных
+mysqlclient==2.2.7
+PyMySQL==1.1.1
+
+# WebSocket (для чата)
+channels==4.2.0
+channels-redis==4.2.0
+daphne==4.1.2
+
