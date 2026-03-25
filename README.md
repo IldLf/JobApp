@@ -16,3 +16,11 @@
 - AutoTests (тут находятся автотесты)
 
   
+## Запуск проекта
+1) cd /App_code/client
+2) npm install
+3) npm start
+4) cd /App_code/server
+5) npm install
+6) npm run dev
+Порт к базе данных находиться в .env в /server по умолчанию 3306
