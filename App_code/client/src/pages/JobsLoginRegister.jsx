@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import authService from '../services/authService';
 import { useNavigate } from 'react-router-dom';
-import './JobsLoginRegister.css';
+import '../styles/JobsLoginRegister.css';
 
 const JobsLoginRegister = ({ onLoginSuccess, onRegisterSuccess }) => {
   const navigate = useNavigate();

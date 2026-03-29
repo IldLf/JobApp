@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Header from './Header';
-import './JobsRealMain.css';
+import Header from '../components/Header';
+import '../styles/JobsRealMain.css';
 
 const JobsRealMain = ({user, onLogout}) => {
   console.log('JobsRealMain received user:', user);

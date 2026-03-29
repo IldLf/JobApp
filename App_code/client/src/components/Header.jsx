@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './Header.css';
+import '../styles/Header.css';
 
 const Header = ({ user, onLogout }) => {
   const location = useLocation();
@@ -28,7 +28,7 @@ const Header = ({ user, onLogout }) => {
         </Link>
         <Link 
           to="/catalog" 
-          className={`nav-link ${location.pathname === '/search' ? 'active' : ''}`}
+          className={`nav-link ${location.pathname === '/catalog' ? 'active' : ''}`}
         >
           Поиск
         </Link>

@@ -14,6 +14,7 @@ body {
 /* Основной контейнер */
 .main-container {
     max-width: 1400px;
+    min-width: 1400px;
     margin: 0 auto;
 }
 
@@ -81,7 +82,7 @@ body {
 }
 
 /* Табы */
-.tabs {
+.account-tabs {
     display: flex;
     gap: 10px;
     margin-bottom: 30px;
@@ -89,7 +90,7 @@ body {
     padding-bottom: 10px;
 }
 
-.tab {
+.account-tab {
     padding: 10px 20px;
     cursor: pointer;
     color: #666;
@@ -100,12 +101,12 @@ body {
     border-radius: 5px;
 }
 
-.tab:hover {
+.account-tab:hover {
     background: #f0f0f0;
     color: #667eea;
 }
 
-.tab.active {
+.account-tab.active {
     background: #667eea;
     color: white;
     font-weight: 500;
@@ -435,7 +436,7 @@ input:checked + .slider:before {
 }
 
 .message.error {
-    background: #f5cbcf;
+    background: #f8d7da;
     color: #721c24;
     display: block;
 }
