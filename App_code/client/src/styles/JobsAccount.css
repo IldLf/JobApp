@@ -265,6 +265,24 @@ input:focus, select:focus, textarea:focus {
     font-weight: 500;
 }
 
+.item-status.accepted {
+    background-color: #68ff8b;
+    color: rgb(27, 92, 27)
+}
+
+.item-status.viewed {
+    background-color: rgb(255, 246, 122);
+    color:rgb(112, 106, 23);
+}
+.item-status.pending {
+    background-color: rgb(255, 204, 65);
+    color:rgb(119, 94, 25)
+}
+.item-status.rejected {
+    background-color: rgb(255, 87, 87);
+    color: rgb(116, 10, 10);
+}
+
 .status-pending {
     background: #fff3cd;
     color: #856404;
@@ -490,4 +508,12 @@ input:checked + .slider:before {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.empty-state-p {
+    margin: 80px;
+    justify-content: center;
+    justify-self: center;
+    vertical-align: center;
+    font-size: 30px;
 }

@@ -48,7 +48,7 @@ class ProfileService {
         try {
             const response = await fetch(`${API_URL}/dashboard/stats/${userId}`);
             const data = await response.json();
-            console.log(data)
+            console.log(data);
             return data;
         } catch (error) {
             console.error('Ошибка получения статистики:', error);

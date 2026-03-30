@@ -1,48 +1,288 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
+import catalogService from '../services/catalogService';
 import '../styles/JobsCatalog.css';
+import '../styles/ResponseModal.css';
 
-// --- ПОЛНЫЕ ДАННЫЕ ИЗ ОРИГИНАЛЬНОЙ ВЕРСТКИ ---
-const FILTERS_PROFESSIONS = [
-    'Все профессии', 'Python разработчик', 'Java разработчик', 'JavaScript разработчик',
-    'Frontend разработчик', 'Backend разработчик', 'Fullstack разработчик', 'DevOps инженер',
-    'Системный администратор', 'Аналитик данных', 'Data Scientist', 'Project Manager',
-    'Product Manager', 'UI/UX дизайнер', 'Графический дизайнер', 'Менеджер по продажам',
-    'HR менеджер', 'Тестировщик', 'Android разработчик', 'iOS разработчик', 'SEO специалист'
-];
-const FILTERS_CITIES = ['Все города', 'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань', 'Нижний Новгород', 'Самара'];
-const FILTERS_EXPERIENCE = ['Нет опыта', '1-3 года', '3-5 лет', 'Более 5 лет'];
-const FILTERS_TYPE = ['Полная занятость', 'Частичная занятость', 'Проектная работа', 'Стажировка'];
-
-const VACANCIES = [
-    { id: 1, title: 'Python разработчик в Яндекс', salary: '200 000 - 350 000 ₽', company: 'Яндекс', city: 'Москва', desc: 'Разработка высоконагруженных сервисов на Python. Требуемый опыт: 3-5 лет.', tags: ['3-5 лет', 'full-time', 'Python', 'Django'], expTag: '3-5 лет' },
-    { id: 2, title: 'Frontend разработчик (React)', salary: '150 000 - 250 000 ₽', company: 'Mail.ru Group', city: 'Москва', desc: 'Разработка интерфейсов на React. Опыт работы от 2 лет.', tags: ['2-3 года', 'full-time', 'React', 'Vue.js'], expTag: '2-3 года' },
-    { id: 3, title: 'Data Scientist', salary: '250 000 - 400 000 ₽', company: 'Сбер', city: 'Москва', desc: 'Разработка моделей машинного обучения. Опыт работы от 4 лет.', tags: ['4-6 лет', 'full-time', 'ML', 'Python'], expTag: '4-6 лет' },
-    { id: 4, title: 'DevOps инженер', salary: '200 000 - 350 000 ₽', company: 'Ozon', city: 'Москва', desc: 'Поддержка инфраструктуры, CI/CD. Опыт работы от 3 лет.', tags: ['3-5 лет', 'full-time', 'Kubernetes', 'CI/CD'], expTag: '3-5 лет' },
-    { id: 5, title: 'UX/UI дизайнер', salary: '130 000 - 220 000 ₽', company: 'Wildberries', city: 'Москва', desc: 'Проектирование интерфейсов для маркетплейса. Опыт работы от 2 лет.', tags: ['2-4 года', 'full-time', 'Figma', 'UI/UX'], expTag: '2-4 года' },
-    { id: 6, title: 'Java разработчик', salary: '180 000 - 300 000 ₽', company: 'Ozon', city: 'Москва', desc: 'Разработка бэкенда для маркетплейса. Опыт работы от 3 лет.', tags: ['3-5 лет', 'full-time', 'Java', 'Spring'], expTag: '3-5 лет' }
-];
-
-const RESUMES = [
-    { id: 1, name: 'Иван Иванов', profession: 'Senior Python разработчик', info: 'Москва • 5 лет опыта • 150 000 ₽', desc: 'Опытный Python разработчик, специализируюсь на веб-приложениях. МГУ, Прикладная математика.', skills: ['Python', 'Django', 'FastAPI', 'SQL'] },
-    { id: 2, name: 'Петр Петров', profession: 'Frontend разработчик', info: 'Санкт-Петербург • 3 года опыта • 120 000 ₽', desc: 'Frontend разработчик, React, Vue.js. ИТМО, Программная инженерия.', skills: ['React', 'Vue.js', 'JavaScript', 'HTML/CSS'] },
-    { id: 3, name: 'Анна Смирнова', profession: 'Data Scientist', info: 'Москва • 6 лет опыта • 200 000 ₽', desc: 'Data Scientist, машинное обучение и анализ данных. МФТИ, Прикладная математика и физика.', skills: ['Python', 'ML', 'SQL', 'Pandas'] },
-    { id: 4, name: 'Елена Козлова', profession: 'UI/UX дизайнер', info: 'Казань • 4 года опыта • 90 000 ₽', desc: 'UI/UX дизайнер, создаю удобные интерфейсы. КФУ, Дизайн.', skills: ['Figma', 'UI/UX', 'Sketch', 'Adobe XD'] },
-    { id: 5, name: 'Дмитрий Соколов', profession: 'Fullstack разработчик', info: 'Новосибирск • 5 лет опыта • 160 000 ₽', desc: 'Fullstack разработчик, Python + JavaScript. НГУ, Информатика.', skills: ['Python', 'JavaScript', 'Django', 'React'] }
-];
-// ----------------------------------------
-
-const JobsCatalog = ({user, onLogout}) => {
+const JobsCatalog = ({ user, onLogout }) => {
     const [activeSection, setActiveSection] = useState('vacancies');
+    const [vacancies, setVacancies] = useState([]);
+    const [resumes, setResumes] = useState([]);
+    const [professions, setProfessions] = useState([]);
+
+    // Пагинация
+    const [vacancyPagination, setVacancyPagination] = useState({
+        currentPage: 1,
+        totalPages: 1,
+        total: 0
+    });
+    const [resumePagination, setResumePagination] = useState({
+        currentPage: 1,
+        totalPages: 1,
+        total: 0
+    });
+
+    // Раздельные фильтры для вакансий и резюме
+    const [vacancyFilters, setVacancyFilters] = useState({
+        profession_id: 'all',
+        city: 'all',
+        experience: 'all',
+        salary_from: '',
+        salary_to: '',
+        employment_type: 'all'
+    });
+
+    const [resumeFilters, setResumeFilters] = useState({
+        profession_id: 'all',
+        experience: 'all',
+        salary_from: '',
+        salary_to: ''
+    });
+
+    // Города только для вакансий
+    const [vacancyCities, setVacancyCities] = useState([]);
+
+    const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ text: '', type: 'info', visible: false });
+
+    // Состояние для модального окна отклика
+    const [responseModal, setResponseModal] = useState({
+        isOpen: false,
+        type: null,
+        targetId: null,
+        targetTitle: '',
+        coverLetter: ''
+    });
+    const [sending, setSending] = useState(false);
 
     const showMessage = (text, type = 'info') => {
         setMessage({ text, type, visible: true });
         setTimeout(() => setMessage(prev => ({ ...prev, visible: false })), 3000);
     };
 
-    const handleApplyFilters = () => {
-        showMessage('Фильтры применены (демо-режим)', 'info');
+    // Загрузка данных для фильтров
+    useEffect(() => {
+        const loadFiltersData = async () => {
+            const [professionsData, vacancyCitiesData] = await Promise.all([
+                catalogService.getProfessions(),
+                catalogService.getVacancyCities()
+            ]);
+            setProfessions(professionsData);
+            setVacancyCities(vacancyCitiesData);
+        };
+        loadFiltersData();
+    }, []);
+
+    // Загрузка вакансий при изменении фильтров вакансий или страницы
+    useEffect(() => {
+        const loadVacancies = async () => {
+            setLoading(true);
+            const result = await catalogService.getVacancies(
+                vacancyFilters,
+                vacancyPagination.currentPage,
+                5
+            );
+            setVacancies(result.vacancies || []);
+            setVacancyPagination({
+                currentPage: result.page,
+                totalPages: result.totalPages,
+                total: result.total
+            });
+            setLoading(false);
+        };
+
+        if (activeSection === 'vacancies') {
+            loadVacancies();
+        }
+    }, [activeSection, vacancyFilters, vacancyPagination.currentPage]);
+
+    // Загрузка резюме при изменении фильтров резюме или страницы
+    useEffect(() => {
+        const loadResumes = async () => {
+            setLoading(true);
+            const result = await catalogService.getResumes(
+                resumeFilters,
+                resumePagination.currentPage,
+                5
+            );
+            setResumes(result.resumes || []);
+            setResumePagination({
+                currentPage: result.page,
+                totalPages: result.totalPages,
+                total: result.total
+            });
+            setLoading(false);
+        };
+
+        if (activeSection === 'resumes') {
+            loadResumes();
+        }
+    }, [activeSection, resumeFilters, resumePagination.currentPage]);
+
+    const handleVacancyFilterChange = (key, value) => {
+        setVacancyFilters(prev => ({ ...prev, [key]: value }));
+        // Сбрасываем на первую страницу при изменении фильтров
+        setVacancyPagination(prev => ({ ...prev, currentPage: 1 }));
+    };
+
+    const handleResumeFilterChange = (key, value) => {
+        setResumeFilters(prev => ({ ...prev, [key]: value }));
+        // Сбрасываем на первую страницу при изменении фильтров
+        setResumePagination(prev => ({ ...prev, currentPage: 1 }));
+    };
+
+    const handleApplyVacancyFilters = () => {
+        showMessage('Фильтры вакансий применены', 'success');
+    };
+
+    const handleApplyResumeFilters = () => {
+        showMessage('Фильтры резюме применены', 'success');
+    };
+
+    const handleResetVacancyFilters = () => {
+        setVacancyFilters({
+            profession_id: 'all',
+            city: 'all',
+            experience: 'all',
+            salary_from: '',
+            salary_to: '',
+            employment_type: 'all'
+        });
+        setVacancyPagination(prev => ({ ...prev, currentPage: 1 }));
+        showMessage('Фильтры вакансий сброшены', 'info');
+    };
+
+    const handleResetResumeFilters = () => {
+        setResumeFilters({
+            profession_id: 'all',
+            experience: 'all',
+            salary_from: '',
+            salary_to: ''
+        });
+        setResumePagination(prev => ({ ...prev, currentPage: 1 }));
+        showMessage('Фильтры резюме сброшены', 'info');
+    };
+
+    // Функции для смены страницы
+    const goToPrevPage = () => {
+        if (activeSection === 'vacancies' && vacancyPagination.currentPage > 1) {
+            setVacancyPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }));
+        } else if (activeSection === 'resumes' && resumePagination.currentPage > 1) {
+            setResumePagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }));
+        }
+    };
+
+    const goToNextPage = () => {
+        if (activeSection === 'vacancies' && vacancyPagination.currentPage < vacancyPagination.totalPages) {
+            setVacancyPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
+        } else if (activeSection === 'resumes' && resumePagination.currentPage < resumePagination.totalPages) {
+            setResumePagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
+        }
+    };
+
+    const goToPage = (page) => {
+        if (activeSection === 'vacancies') {
+            setVacancyPagination(prev => ({ ...prev, currentPage: page }));
+        } else {
+            setResumePagination(prev => ({ ...prev, currentPage: page }));
+        }
+    };
+
+    // Открытие модального окна для отклика
+    const openResponseModal = (type, targetId, targetTitle) => {
+        setResponseModal({
+            isOpen: true,
+            type,
+            targetId,
+            targetTitle,
+            coverLetter: ''
+        });
+    };
+
+    // Закрытие модального окна
+    const closeResponseModal = () => {
+        setResponseModal({
+            isOpen: false,
+            type: null,
+            targetId: null,
+            targetTitle: '',
+            coverLetter: ''
+        });
+    };
+
+    // Отправка отклика
+    const handleSendResponse = async () => {
+        if (!responseModal.coverLetter.trim()) {
+            showMessage('Пожалуйста, напишите сопроводительное письмо', 'error');
+            return;
+        }
+
+        setSending(true);
+
+        let result;
+        if (responseModal.type === 'vacancy') {
+            result = await catalogService.respondToVacancy(
+                responseModal.targetId,
+                user?.id,
+                responseModal.coverLetter
+            );
+        } else {
+            result = await catalogService.respondToResume(
+                responseModal.targetId,
+                user?.id,
+                responseModal.coverLetter
+            );
+        }
+
+        if (result.success) {
+            showMessage(result.message, 'success');
+            closeResponseModal();
+        } else {
+            showMessage(result.error || 'Ошибка при отправке', 'error');
+        }
+
+        setSending(false);
+    };
+
+    // Проверка, может ли пользователь откликаться
+    const canRespondToVacancy = () => {
+        return user && user.user_type === 'applicant';
+    };
+
+    const canRespondToResume = () => {
+        return user && user.user_type === 'employer';
+    };
+
+    // Получаем текущие фильтры в зависимости от активной вкладки
+    const currentFilters = activeSection === 'vacancies' ? vacancyFilters : resumeFilters;
+    const currentPagination = activeSection === 'vacancies' ? vacancyPagination : resumePagination;
+    const handleFilterChange = activeSection === 'vacancies' ? handleVacancyFilterChange : handleResumeFilterChange;
+    const handleApplyFilters = activeSection === 'vacancies' ? handleApplyVacancyFilters : handleApplyResumeFilters;
+    const handleResetFilters = activeSection === 'vacancies' ? handleResetVacancyFilters : handleResetResumeFilters;
+
+    // Функция для отображения номеров страниц
+    const renderPageNumbers = () => {
+        const pages = [];
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPagination.currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(currentPagination.totalPages, startPage + maxPagesToShow - 1);
+
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(
+                <button
+                    key={i}
+                    onClick={() => goToPage(i)}
+                    className={`pagination-page ${currentPagination.currentPage === i ? 'active' : ''}`}
+                >
+                    {i}
+                </button>
+            );
+        }
+        return pages;
     };
 
     return (
@@ -61,31 +301,51 @@ const JobsCatalog = ({user, onLogout}) => {
 
                 {/* Фильтры */}
                 <div className="filters-section">
-                    <h3 className="filters-title">Фильтры</h3>
+                    <h3 className="filters-title">
+                        {activeSection === 'vacancies' ? 'Фильтры вакансий' : 'Фильтры резюме'}
+                    </h3>
 
                     <div className="filter-group">
                         <label className="filter-label">Профессия</label>
-                        <select className="filter-select">
-                            {FILTERS_PROFESSIONS.map((prof, i) => (
-                                <option key={i} value={i === 0 ? "" : i}>{prof}</option>
+                        <select
+                            className="filter-select"
+                            value={currentFilters.profession_id}
+                            onChange={(e) => handleFilterChange('profession_id', e.target.value)}
+                        >
+                            <option value="all">Все профессии</option>
+                            {professions.map(prof => (
+                                <option key={prof.id} value={prof.id}>{prof.name}</option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-label">Город</label>
-                        <select className="filter-select">
-                            {FILTERS_CITIES.map((city, i) => (
-                                <option key={i} value={i === 0 ? "" : city}>{city}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {/* Город - только для вакансий */}
+                    {activeSection === 'vacancies' && (
+                        <div className="filter-group">
+                            <label className="filter-label">Город</label>
+                            <select
+                                className="filter-select"
+                                value={vacancyFilters.city}
+                                onChange={(e) => handleVacancyFilterChange('city', e.target.value)}
+                            >
+                                <option value="all">Все города</option>
+                                {vacancyCities.map(city => (
+                                    <option key={city} value={city}>{city}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="filter-group">
                         <label className="filter-label">Опыт работы</label>
-                        {FILTERS_EXPERIENCE.map((exp, i) => (
+                        {['Нет опыта', '1-3 года', '3-5 лет', 'Более 5 лет'].map((exp, i) => (
                             <div key={i} className="filter-checkbox">
-                                <input type="checkbox" id={`exp-${i}`} />
+                                <input
+                                    type="checkbox"
+                                    id={`exp-${i}`}
+                                    checked={currentFilters.experience === exp}
+                                    onChange={() => handleFilterChange('experience', currentFilters.experience === exp ? 'all' : exp)}
+                                />
                                 <label htmlFor={`exp-${i}`}>{exp}</label>
                             </div>
                         ))}
@@ -94,76 +354,242 @@ const JobsCatalog = ({user, onLogout}) => {
                     <div className="filter-group">
                         <label className="filter-label">Зарплата</label>
                         <div className="salary-range">
-                            <input type="number" className="filter-input" placeholder="От" min="0" />
-                            <input type="number" className="filter-input" placeholder="До" min="0" />
+                            <input
+                                type="number"
+                                className="filter-input"
+                                placeholder="От"
+                                min="0"
+                                value={currentFilters.salary_from}
+                                onChange={(e) => handleFilterChange('salary_from', e.target.value)}
+                            />
+                            <input
+                                type="number"
+                                className="filter-input"
+                                placeholder="До"
+                                min="0"
+                                value={currentFilters.salary_to}
+                                onChange={(e) => handleFilterChange('salary_to', e.target.value)}
+                            />
                         </div>
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-label">Тип занятости</label>
-                        {FILTERS_TYPE.map((type, i) => (
-                            <div key={i} className="filter-checkbox">
-                                <input type="checkbox" id={`type-${i}`} />
-                                <label htmlFor={`type-${i}`}>{type}</label>
-                            </div>
-                        ))}
-                    </div>
+                    {/* Тип занятости - только для вакансий */}
+                    {activeSection === 'vacancies' && (
+                        <div className="filter-group">
+                            <label className="filter-label">Тип занятости</label>
+                            {['Полная занятость', 'Частичная занятость', 'Проектная работа', 'Стажировка'].map((type, i) => (
+                                <div key={i} className="filter-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        id={`type-${i}`}
+                                        checked={vacancyFilters.employment_type === type}
+                                        onChange={() => handleVacancyFilterChange('employment_type', vacancyFilters.employment_type === type ? 'all' : type)}
+                                    />
+                                    <label htmlFor={`type-${i}`}>{type}</label>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                    <button className="apply-filters-btn" onClick={handleApplyFilters}>Применить фильтры</button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="apply-filters-btn" onClick={handleApplyFilters}>
+                            Применить фильтры
+                        </button>
+                        <button className="apply-filters-btn" onClick={handleResetFilters} style={{ background: '#6c757d' }}>
+                            Сбросить
+                        </button>
+                    </div>
                 </div>
 
                 {/* Список вакансий/резюме */}
                 <div className="vacancies-section">
                     <div className="section-tabs">
-                        <button className={`section-tab ${activeSection === 'vacancies' ? 'active' : ''}`} onClick={() => setActiveSection('vacancies')}>Вакансии</button>
-                        <button className={`section-tab ${activeSection === 'resumes' ? 'active' : ''}`} onClick={() => setActiveSection('resumes')}>Резюме</button>
+                        <button
+                            className={`section-tab ${activeSection === 'vacancies' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('vacancies')}
+                        >
+                            Вакансии
+                        </button>
+                        <button
+                            className={`section-tab ${activeSection === 'resumes' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('resumes')}
+                        >
+                            Резюме
+                        </button>
                     </div>
 
-                    {/* Вакансии */}
-                    {activeSection === 'vacancies' && (
-                        <div className="vacancies-list">
-                            {VACANCIES.map(vac => (
-                                <div key={vac.id} className="vacancy-card" onClick={() => showMessage('Для просмотра детальной информации войдите в личный кабинет')}>
-                                    <div className="vacancy-header">
-                                        <span className="vacancy-title">{vac.title}</span>
-                                        <span className="vacancy-salary">{vac.salary}</span>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px' }}>Загрузка...</div>
+                    ) : (
+                        <>
+                            {/* Вакансии */}
+                            {activeSection === 'vacancies' && (
+                                <>
+                                    <div className="vacancies-list">
+                                        {vacancies.length === 0 ? (
+                                            <div style={{ textAlign: 'center', padding: '40px' }}>Нет вакансий, соответствующих фильтрам</div>
+                                        ) : (
+                                            vacancies.map(vac => (
+                                                <div key={vac.id} className="vacancy-card">
+                                                    <div className="vacancy-header">
+                                                        <span className="vacancy-title">{vac.title}</span>
+                                                        <span className="vacancy-salary">
+                                                            {vac.salary_from && vac.salary_to ? `${vac.salary_from} - ${vac.salary_to} ₽` :
+                                                                vac.salary_from ? `от ${vac.salary_from} ₽` :
+                                                                    vac.salary_to ? `до ${vac.salary_to} ₽` : 'з/п не указана'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="vacancy-company">{vac.Company?.name || 'Компания'} • {vac.city || 'Не указан'}</div>
+                                                    <div className="vacancy-description">{vac.description}</div>
+                                                    <div className="vacancy-tags">
+                                                        {vac.experience_required && (
+                                                            <span className="vacancy-tag experience">{vac.experience_required}</span>
+                                                        )}
+                                                        {vac.employment_type && (
+                                                            <span className="vacancy-tag type">{vac.employment_type}</span>
+                                                        )}
+                                                        {vac.Profession && (
+                                                            <span className="vacancy-tag">{vac.Profession.name}</span>
+                                                        )}
+                                                    </div>
+                                                    {canRespondToVacancy() && (
+                                                        <button
+                                                            className="response-btn"
+                                                            onClick={() => openResponseModal('vacancy', vac.id, vac.title)}
+                                                        >
+                                                            Откликнуться
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
-                                    <div className="vacancy-company">{vac.company} • {vac.city}</div>
-                                    <div className="vacancy-description">{vac.desc}</div>
-                                    <div className="vacancy-tags">
-                                        <span className="vacancy-tag experience">{vac.expTag}</span>
-                                        {vac.tags.filter(t => t !== vac.expTag).map(tag => (
-                                            <span key={tag} className="vacancy-tag">{tag}</span>
-                                        ))}
-                                    </div>
-                                    <button className="response-btn" onClick={(e) => { e.stopPropagation(); showMessage('Отклик отправлен (демо-режим)', 'success'); }}>Откликнуться</button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
 
-                    {/* Резюме */}
-                    {activeSection === 'resumes' && (
-                        <div className="vacancies-list">
-                            {RESUMES.map(resume => (
-                                <div key={resume.id} className="resume-card" onClick={() => showMessage('Для просмотра детальной информации войдите в личный кабинет')}>
-                                    <div className="resume-name">{resume.name}</div>
-                                    <div className="resume-profession">{resume.profession}</div>
-                                    <div className="resume-info">{resume.info}</div>
-                                    <div className="vacancy-description">{resume.desc}</div>
-                                    <div className="resume-skills">
-                                        {resume.skills.map(skill => (
-                                            <span key={skill} className="resume-skill">{skill}</span>
-                                        ))}
-                                    </div>
-                                    <button className="response-btn" onClick={(e) => { e.stopPropagation(); showMessage('Приглашение отправлено (демо-режим)', 'success'); }}>Откликнуться</button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                    {/* Пагинация для вакансий */}
+                                    {vacancyPagination.totalPages > 0 && (
+                                        <div className="pagination">
+                                            <button
+                                                onClick={goToPrevPage}
+                                                disabled={vacancyPagination.currentPage === 1}
+                                                className="pagination-btn"
+                                            >
+                                                ← Назад
+                                            </button>
+                                            <div className="pagination-pages">
+                                                {renderPageNumbers()}
+                                            </div>
+                                            <button
+                                                onClick={goToNextPage}
+                                                disabled={vacancyPagination.currentPage === vacancyPagination.totalPages}
+                                                className="pagination-btn"
+                                            >
+                                                Вперед →
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
+                            {/* Резюме */}
+                            {activeSection === 'resumes' && (
+                                <>
+                                    <div className="vacancies-list">
+                                        {resumes.length === 0 ? (
+                                            <div style={{ textAlign: 'center', padding: '40px' }}>Нет резюме, соответствующих фильтрам</div>
+                                        ) : (
+                                            resumes.map(resume => {
+                                                const userInfo = resume.Applicant?.User;
+                                                const fullName = userInfo ? `${userInfo.first_name || ''} ${userInfo.last_name || ''}`.trim() : 'Пользователь';
+
+                                                return (
+                                                    <div key={resume.id} className="resume-card">
+                                                        <div className="resume-name">{fullName}</div>
+                                                        <div className="resume-profession">{resume.title}</div>
+                                                        <div className="resume-info">
+                                                            {resume.experience || 'Опыт не указан'} •
+                                                            {resume.salary ? `${resume.salary} ₽` : 'з/п не указана'}
+                                                        </div>
+                                                        <div className="vacancy-description">{resume.about}</div>
+                                                        <div className="resume-skills">
+                                                            {resume.Profession && (
+                                                                <span className="resume-skill">{resume.Profession.name}</span>
+                                                            )}
+                                                        </div>
+                                                        {canRespondToResume() && (
+                                                            <button
+                                                                className="response-btn"
+                                                                onClick={() => openResponseModal('resume', resume.id, resume.title)}
+                                                            >
+                                                                Пригласить
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+
+                                    {/* Пагинация для резюме */}
+                                    {resumePagination.totalPages > 0 && (
+                                        <div className="pagination">
+                                            <button
+                                                onClick={goToPrevPage}
+                                                disabled={resumePagination.currentPage === 1}
+                                                className="pagination-btn"
+                                            >
+                                                ← Назад
+                                            </button>
+                                            <div className="pagination-pages">
+                                                {renderPageNumbers()}
+                                            </div>
+                                            <button
+                                                onClick={goToNextPage}
+                                                disabled={resumePagination.currentPage === resumePagination.totalPages}
+                                                className="pagination-btn"
+                                            >
+                                                Вперед →
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
+
+            {/* Модальное окно для отклика */}
+            {responseModal.isOpen && (
+                <div className="response-modal-overlay" onClick={closeResponseModal}>
+                    <div className="response-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Отклик на {responseModal.type === 'vacancy' ? 'вакансию' : 'резюме'}</h3>
+                        <p className="response-modal-target">{responseModal.targetTitle}</p>
+                        <textarea
+                            className="response-modal-textarea"
+                            placeholder="Напишите сопроводительное письмо..."
+                            value={responseModal.coverLetter}
+                            onChange={(e) => setResponseModal(prev => ({ ...prev, coverLetter: e.target.value }))}
+                            rows={6}
+                        />
+                        <div className="response-modal-buttons">
+                            <button
+                                className="response-modal-btn response-modal-btn-cancel"
+                                onClick={closeResponseModal}
+                                disabled={sending}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                className="response-modal-btn response-modal-btn-submit"
+                                onClick={handleSendResponse}
+                                disabled={sending}
+                            >
+                                {sending ? 'Отправка...' : 'Отправить'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Всплывающее уведомление */}
             {message.visible && (

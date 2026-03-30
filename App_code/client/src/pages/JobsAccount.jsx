@@ -194,6 +194,22 @@ const JobsAccount = ({user, onLogout}) => {
         showMessage(`${action} (демо-режим)`);
     };
 
+    const handleInviteStatus = (status) => {
+        switch (status) {
+            case 'accepted':
+                return "Принято";
+            case 'viewed':
+                return "Просмотрено";
+            case 'pending':
+                return "В ожидании";
+            case 'rejected':
+                return "Отклонено";
+            default:
+                return 'Неизвестный статус';
+        }
+        return '';
+    }
+
     return (
         <div className="main-container">
             {/* Хедер */}
@@ -223,7 +239,7 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="stat-label">Откликов</div>
                     </div>
                     <div className="stat-card">
-                        <div className="stat-number">{stats?.accepted_responses || responsesStats?.accepted || 0}</div>
+                        <div className="stat-number">{resumeResponses.length || resumeResponses?.length || 0}</div>
                         <div className="stat-label">Приглашений</div>
                     </div>
                     <div className="stat-card">
@@ -263,7 +279,7 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="items-list">
                             {userResumeData.length === 0 ? (
                                 <div className="empty-state">
-                                    <p>У вас пока нет резюме :\</p>
+                                    <p className='empty-state-p'>У вас пока нет резюме :\</p>
                                     <button className="btn" onClick={() => showMessage('Создать резюме')}>
                                         Создать первое резюме
                                     </button>
@@ -311,7 +327,7 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="items-list">
                             {userResponsesData.length === 0 ? (
                                 <div className="empty-state">
-                                    <p>У вас пока нет откликов :\</p>
+                                    <p className='empty-state-p'>У вас пока нет откликов :\</p>
                                     <button className="btn" onClick={() => navigate('/search')}>
                                         Найти вакансии
                                     </button>
@@ -372,7 +388,7 @@ const JobsAccount = ({user, onLogout}) => {
                 </div>
             )}
 
-            {/* Контент: Приглашения от компаний (пока нет в базе данных) */}
+            {/* Контент: Приглашения от компаний */}
             {activeTab === 'invites' && (
                 <div className="tab-content active">
                     <div className="card">
@@ -382,10 +398,10 @@ const JobsAccount = ({user, onLogout}) => {
                         
                         <div className="items-list">
                             {resumeResponses.map(response => (
-                                <div key={response.resume_id} className="item-card">
+                                <div key={response.id} className="item-card">
                                     <div className="item-header">
                                         <span className="item-title">Название приглашения</span>
-                                        <span className={`item-status ${response.status}`}>{response.status}</span>
+                                        <span className={`item-status ${response.status}`}>{handleInviteStatus(response.status)}</span>
                                     </div>
                                     <div className="item-company">{response.name}</div>
                                     <div className="item-meta">{response.created_at}</div>

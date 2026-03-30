@@ -1,11 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { Op } = require('sequelize');
 
 dotenv.config();
 
 const { sequelize, testConnection } = require('./src/config/database');
 const User = require('./src/models/User')(sequelize);
+const Profession = require('./src/models/Profession')(sequelize);
+const Company = require('./src/models/Company')(sequelize);
+const Applicant = require('./src/models/Applicant')(sequelize);
+const Vacancy = require('./src/models/Vacancy')(sequelize);
+const Resume = require('./src/models/Resume')(sequelize);
+const VacancyResponse = require('./src/models/VacancyResponse')(sequelize);
+const ResumeResponse = require('./src/models/ResumeResponse')(sequelize);
 
 const app = express();
 const PORT = process.env.PORT;
@@ -18,6 +26,43 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+// ==================== НАСТРОЙКА СВЯЗЕЙ ====================
+
+// User -> Applicant (один к одному)
+User.hasOne(Applicant, { foreignKey: 'user_id' });
+Applicant.belongsTo(User, { foreignKey: 'user_id' });
+
+// User -> Company (один к одному)
+User.hasOne(Company, { foreignKey: 'user_id' });
+Company.belongsTo(User, { foreignKey: 'user_id' });
+
+// Applicant -> Resume (один ко многим)
+Applicant.hasMany(Resume, { foreignKey: 'applicant_id' });
+Resume.belongsTo(Applicant, { foreignKey: 'applicant_id' });
+
+// Company -> Vacancy (один ко многим)
+Company.hasMany(Vacancy, { foreignKey: 'company_id' });
+Vacancy.belongsTo(Company, { foreignKey: 'company_id' });
+
+// Profession связи
+Vacancy.belongsTo(Profession, { foreignKey: 'profession_id' });
+Resume.belongsTo(Profession, { foreignKey: 'profession_id' });
+
+// VacancyResponse связи
+Vacancy.hasMany(VacancyResponse, { foreignKey: 'vacancy_id' });
+VacancyResponse.belongsTo(Vacancy, { foreignKey: 'vacancy_id' });
+Applicant.hasMany(VacancyResponse, { foreignKey: 'applicant_id' });
+VacancyResponse.belongsTo(Applicant, { foreignKey: 'applicant_id' });
+
+// ResumeResponse связи
+Resume.hasMany(ResumeResponse, { foreignKey: 'resume_id' });
+ResumeResponse.belongsTo(Resume, { foreignKey: 'resume_id' });
+Company.hasMany(ResumeResponse, { foreignKey: 'company_id' });
+ResumeResponse.belongsTo(Company, { foreignKey: 'company_id' });
+
+// ==================== ЭНДПОИНТЫ ====================
 
 // данные о пользователях
 app.get('/api/users', async (req, res) => {
@@ -98,6 +143,7 @@ app.get('/api/applicant/profile/:userId', async (req, res) => {
         });
     }
 });
+
 // данные о резюме пользователя
 app.get('/api/applicant/resumes/:userId', async (req, res) => {
     try {
@@ -136,6 +182,7 @@ app.get('/api/applicant/resumes/:userId', async (req, res) => {
         });
     }
 });
+
 // данные об откликах
 app.get('/api/applicant/responses/:userId', async (req, res) => {
     try {
@@ -194,12 +241,14 @@ app.get('/api/applicant/responses/:userId', async (req, res) => {
         });
     }
 });
+
+// приглашения
 app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         
         const query = `
-            SELECT u.id as user_id, r.id AS resume_id, c.name, rr.message, rr.status, rr.created_at
+            SELECT rr.id, u.id as user_id, r.id AS resume_id, c.name, rr.message, rr.status, rr.created_at
             FROM resumes r 
             JOIN resume_responses rr ON r.id = rr.resume_id
             JOIN companies c ON c.id = rr.company_id
@@ -227,6 +276,7 @@ app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
     }
 });
 
+// статистика
 app.get('/api/dashboard/stats/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
@@ -409,6 +459,311 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
+// Получение списка профессий для фильтров
+app.get('/api/professions', async (req, res) => {
+    try {
+        const professions = await Profession.findAll({
+            attributes: ['id', 'name'],
+            order: [['name', 'ASC']]
+        });
+        res.json({ success: true, professions });
+    } catch (error) {
+        console.error('Ошибка получения профессий:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Получение списка городов для фильтров (уникальные из вакансий и резюме)
+// Получение городов для вакансий
+app.get('/api/vacancy-cities', async (req, res) => {
+    try {
+        const cities = await Vacancy.findAll({
+            attributes: ['city'],
+            where: {
+                is_active: true,
+                city: { [Op.ne]: null }
+            },
+            group: ['city']
+        });
+
+        const cityList = cities
+            .map(c => c.city)
+            .filter(city => city && city !== '')
+            .sort();
+
+        res.json({ success: true, cities: cityList });
+    } catch (error) {
+        console.error('Ошибка получения городов для вакансий:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Эндпоинт для городов резюме больше не нужен, так как у резюме нет города
+app.get('/api/resume-cities', async (req, res) => {
+    // У резюме нет города, возвращаем пустой массив
+    res.json({ success: true, cities: [] });
+});
+
+// Получение вакансий с фильтрацией и пагинацией
+app.get('/api/vacancies', async (req, res) => {
+    try {
+        const {
+            profession_id,
+            city,
+            experience,
+            salary_from,
+            salary_to,
+            employment_type,
+            page = 1,
+            limit = 5
+        } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        const whereClause = { is_active: true };
+        const includeClause = [
+            { model: Company, attributes: ['id', 'name', 'city', 'logo_url'] },
+            { model: Profession, attributes: ['id', 'name'] }
+        ];
+
+        // Фильтр по профессии
+        if (profession_id && profession_id !== 'all' && profession_id !== '') {
+            whereClause.profession_id = parseInt(profession_id);
+        }
+
+        // Фильтр по городу
+        if (city && city !== 'all' && city !== '') {
+            whereClause.city = city;
+        }
+
+        // Фильтр по опыту
+        if (experience && experience !== 'all' && experience !== '') {
+            whereClause.experience_required = experience;
+        }
+
+        // Фильтр по типу занятости
+        if (employment_type && employment_type !== 'all' && employment_type !== '') {
+            whereClause.employment_type = employment_type;
+        }
+
+        // Фильтр по зарплате
+        if (salary_from && salary_from !== '' && parseInt(salary_from) > 0) {
+            whereClause.salary_to = { [Op.gte]: parseInt(salary_from) };
+        }
+
+        if (salary_to && salary_to !== '' && parseInt(salary_to) > 0) {
+            whereClause.salary_from = { [Op.lte]: parseInt(salary_to) };
+        }
+
+        // Получаем общее количество
+        const total = await Vacancy.count({ where: whereClause });
+
+        // Получаем вакансии с пагинацией
+        const vacancies = await Vacancy.findAll({
+            where: whereClause,
+            include: includeClause,
+            order: [['created_at', 'DESC']],
+            limit: parseInt(limit),
+            offset: offset
+        });
+
+        res.json({
+            success: true,
+            vacancies,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Ошибка получения вакансий:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Получение резюме с фильтрацией и пагинацией
+app.get('/api/resumes', async (req, res) => {
+    try {
+        const {
+            profession_id,
+            experience,
+            salary_from,
+            salary_to,
+            page = 1,
+            limit = 5
+        } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        const whereClause = { is_active: true };
+        const includeClause = [
+            {
+                model: Applicant,
+                where: { is_active: true },
+                include: [{ model: User, attributes: ['id', 'first_name', 'last_name', 'email'] }]
+            },
+            { model: Profession, attributes: ['id', 'name'] }
+        ];
+
+        // Фильтр по профессии
+        if (profession_id && profession_id !== 'all' && profession_id !== '') {
+            whereClause.profession_id = parseInt(profession_id);
+        }
+
+        // Фильтр по опыту
+        if (experience && experience !== 'all' && experience !== '') {
+            whereClause.experience = { [Op.like]: `%${experience}%` };
+        }
+
+        // Фильтр по зарплате
+        if (salary_from && salary_from !== '' && parseInt(salary_from) > 0) {
+            whereClause.salary = { [Op.gte]: parseInt(salary_from) };
+        }
+
+        if (salary_to && salary_to !== '' && parseInt(salary_to) > 0) {
+            if (whereClause.salary) {
+                whereClause.salary = { ...whereClause.salary, [Op.lte]: parseInt(salary_to) };
+            } else {
+                whereClause.salary = { [Op.lte]: parseInt(salary_to) };
+            }
+        }
+
+        // Получаем общее количество
+        const total = await Resume.count({ where: whereClause });
+
+        // Получаем резюме с пагинацией
+        const resumes = await Resume.findAll({
+            where: whereClause,
+            include: includeClause,
+            order: [['created_at', 'DESC']],
+            limit: parseInt(limit),
+            offset: offset
+        });
+
+        // Форматируем данные для отправки
+        const formattedResumes = resumes.map(resume => ({
+            id: resume.id,
+            title: resume.title,
+            salary: resume.salary,
+            experience: resume.experience,
+            about: resume.about,
+            is_active: resume.is_active,
+            Profession: resume.Profession,
+            Applicant: {
+                ...resume.Applicant.toJSON(),
+                User: resume.Applicant.User
+            }
+        }));
+
+        res.json({
+            success: true,
+            resumes: formattedResumes,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Ошибка получения резюме:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Создание отклика на вакансию
+app.post('/api/vacancy-responses', async (req, res) => {
+    try {
+        const { vacancy_id, user_id, cover_letter } = req.body;
+
+        // Находим applicant по user_id
+        const applicant = await Applicant.findOne({
+            where: { user_id: user_id }
+        });
+
+        if (!applicant) {
+            return res.status(404).json({
+                success: false,
+                error: 'Профиль соискателя не найден'
+            });
+        }
+
+        // Проверяем, не откликался ли уже
+        const existing = await VacancyResponse.findOne({
+            where: { vacancy_id, applicant_id: applicant.id }
+        });
+
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                error: 'Вы уже откликались на эту вакансию'
+            });
+        }
+
+        const response = await VacancyResponse.create({
+            vacancy_id,
+            applicant_id: applicant.id,
+            cover_letter,
+            status: 'pending'
+        });
+
+        res.json({
+            success: true,
+            message: 'Отклик успешно отправлен',
+            response
+        });
+    } catch (error) {
+        console.error('Ошибка создания отклика:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Создание отклика на резюме (для работодателей)
+app.post('/api/resume-responses', async (req, res) => {
+    try {
+        const { resume_id, user_id, message } = req.body;
+
+        // Находим company по user_id
+        const company = await Company.findOne({
+            where: { user_id: user_id }
+        });
+
+        if (!company) {
+            return res.status(404).json({
+                success: false,
+                error: 'Профиль компании не найден'
+            });
+        }
+
+        // Проверяем, не отправляли ли уже приглашение
+        const existing = await ResumeResponse.findOne({
+            where: { resume_id, company_id: company.id }
+        });
+
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                error: 'Вы уже отправляли приглашение этому кандидату'
+            });
+        }
+
+        const response = await ResumeResponse.create({
+            resume_id,
+            company_id: company.id,
+            message,
+            status: 'pending'
+        });
+
+        res.json({
+            success: true,
+            message: 'Приглашение успешно отправлено',
+            response
+        });
+    } catch (error) {
+        console.error('Ошибка создания приглашения:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+
+// ==================== ЗАПУСК СЕРВЕРА ====================
+
 // проверка
 async function startServer() {
     console.log('\nЗапуск\n');
@@ -431,7 +786,6 @@ async function startServer() {
         console.log(`Адрес: http://localhost:${PORT}`);
     });
 }
-
 
 startServer().catch(error => {
     console.error('Фатальная ошибка:', error);
