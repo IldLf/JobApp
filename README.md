@@ -23,4 +23,4 @@
 4) cd /App_code/server
 5) npm install
 6) npm run dev
-Порт к базе данных находиться в .env в /server по умолчанию 3306
+### Порт к базе данных находиться в .env в /server по умолчанию 3306
