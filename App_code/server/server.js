@@ -580,6 +580,52 @@ app.get('/api/vacancies', async (req, res) => {
     }
 });
 
+// Получение одной вакансии по ID
+app.get('/api/vacancies/:id', async (req, res) => {
+  try {
+    const vacancyId = req.params.id;
+    
+    const vacancy = await Vacancy.findOne({
+      where: { 
+        id: vacancyId,
+        is_active: true 
+      },
+      include: [
+        { 
+          model: Company, 
+          attributes: ['id', 'name', 'city', 'logo_url'] 
+        },
+        { 
+          model: Profession, 
+          attributes: ['id', 'name'] 
+        }
+      ]
+    });
+
+    if (!vacancy) {
+      return res.status(404).json({
+        success: false,
+        error: 'Вакансия не найдена'
+      });
+    }
+
+    // Можно будет сделать счётчик просмотров вакансии, но для этого надо обновлять бд
+    // await vacancy.increment('views');
+
+    res.json({
+      success: true,
+      vacancy
+    });
+    
+  } catch (error) {
+    console.error('Ошибка получения вакансии:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Ошибка сервера' 
+    });
+  }
+});
+
 // Получение резюме с фильтрацией и пагинацией
 app.get('/api/resumes', async (req, res) => {
     try {

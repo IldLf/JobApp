@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import catalogService from '../services/catalogService';
 import '../styles/JobsCatalog.css';
@@ -9,6 +10,7 @@ const JobsCatalog = ({ user, onLogout }) => {
     const [vacancies, setVacancies] = useState([]);
     const [resumes, setResumes] = useState([]);
     const [professions, setProfessions] = useState([]);
+    const navigate = useNavigate();
 
     // Пагинация
     const [vacancyPagination, setVacancyPagination] = useState({
@@ -431,7 +433,10 @@ const JobsCatalog = ({ user, onLogout }) => {
                                         ) : (
                                             vacancies.map(vac => (
                                                 <div key={vac.id} className="vacancy-card">
-                                                    <div className="vacancy-header">
+                                                    <div className="vacancy-header" 
+                                                        onClick={(e) => { e.stopPropagation(); // чтобы не сработало дважды
+                                                                            navigate(`/vacancy/${vac.id}`); }}
+                                                        style={{ cursor: 'pointer' }}>
                                                         <span className="vacancy-title">{vac.title}</span>
                                                         <span className="vacancy-salary">
                                                             {vac.salary_from && vac.salary_to ? `${vac.salary_from} - ${vac.salary_to} ₽` :

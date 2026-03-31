@@ -405,3 +405,9 @@
     color: white;
     border-color: #667eea;
 }
+
+/* Подсветка при наведении для перехода на подробную страницу */
+.vacancy-header:hover .vacancy-title {
+    color: #0d6efd; /* или ваш акцентный цвет */
+    text-decoration: underline;
+}
