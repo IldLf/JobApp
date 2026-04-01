@@ -2,10 +2,10 @@ import React, {useState} from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import JobsRealMain from './pages/JobsRealMain';
 import JobsLoginRegister from './pages/JobsLoginRegister';
-
 import './App.css';
 import JobsAccount from "../src/pages/JobsAccount";
 import JobsCatalog from "./pages/JobsCatalog";
+import VacDetails from "./pages/VacDetails";
 
 function App() {
     const [user, setUser] = useState(null);
@@ -39,6 +39,7 @@ function App() {
                 <Route path="/account" element={<JobsAccount user={user} onLogout={handleLogout}/>} />
                 {/* <Route path='/catalog' element={<JobsCatalog user={user} onLogout={handleLogout}/>} />
                 <Route path='/account' element={<JobsAccount user={user} onLogout={handleLogout}/>} /> */}
+                <Route path="/vacancy/:id" element={<VacDetails />} />
             </Routes>
         </Router>
     );

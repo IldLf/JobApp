@@ -416,19 +416,20 @@ app.post('/api/auth/login', async (req, res) => {
 // регистрация
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { email, password, first_name, last_name, user_type } = req.body;   
-        
+        const { email, password, first_name, last_name, user_type } = req.body;
+
         const existingUser = await User.findOne({
             where: { email: email }
         });
-        
+
         if (existingUser) {
             return res.status(409).json({
                 success: false,
                 error: 'Пользователь с таким email уже существует'
             });
         }
-        
+
+        // Создаем пользователя
         const newUser = await User.create({
             email: email,
             password_hash: password,
@@ -436,8 +437,37 @@ app.post('/api/auth/register', async (req, res) => {
             last_name: last_name || null,
             user_type: user_type || 'applicant'
         });
-        
-        
+
+        let profileData = null;
+
+        // Создаем запись в соответствующей таблице в зависимости от типа пользователя
+        if (user_type === 'applicant') {
+            const newApplicant = await Applicant.create({
+                user_id: newUser.id,
+                is_active: true
+                // Остальные поля (profession_id, city и т.д.) будут заполнены позже в профиле
+            });
+            profileData = {
+                id: newApplicant.id,
+                type: 'applicant'
+            };
+        } else if (user_type === 'employer') {
+            // Для работодателя используем имя из регистрации как название компании
+            const companyName = first_name && last_name ? `${first_name} ${last_name}` : email.split('@')[0];
+            const newCompany = await Company.create({
+                user_id: newUser.id,
+                name: companyName,
+                description: null,
+                city: null,
+                logo_url: null
+            });
+            profileData = {
+                id: newCompany.id,
+                name: companyName,
+                type: 'employer'
+            };
+        }
+
         res.status(201).json({
             success: true,
             message: 'Регистрация прошла успешно',
@@ -447,11 +477,13 @@ app.post('/api/auth/register', async (req, res) => {
                 first_name: newUser.first_name,
                 last_name: newUser.last_name,
                 user_type: newUser.user_type,
-                full_name: `${newUser.first_name} ${newUser.last_name}`.trim()
+                full_name: `${newUser.first_name || ''} ${newUser.last_name || ''}`.trim() || email.split('@')[0],
+                profile: profileData
             }
         });
-        
+
     } catch (error) {
+        console.error('Ошибка регистрации:', error);
         res.status(500).json({
             success: false,
             error: 'Ошибка сервера при регистрации'
@@ -578,6 +610,52 @@ app.get('/api/vacancies', async (req, res) => {
         console.error('Ошибка получения вакансий:', error);
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
+});
+
+// Получение одной вакансии по ID
+app.get('/api/vacancies/:id', async (req, res) => {
+  try {
+    const vacancyId = req.params.id;
+    
+    const vacancy = await Vacancy.findOne({
+      where: { 
+        id: vacancyId,
+        is_active: true 
+      },
+      include: [
+        { 
+          model: Company, 
+          attributes: ['id', 'name', 'city', 'logo_url'] 
+        },
+        { 
+          model: Profession, 
+          attributes: ['id', 'name'] 
+        }
+      ]
+    });
+
+    if (!vacancy) {
+      return res.status(404).json({
+        success: false,
+        error: 'Вакансия не найдена'
+      });
+    }
+
+    // Можно будет сделать счётчик просмотров вакансии, но для этого надо обновлять бд
+    // await vacancy.increment('views');
+
+    res.json({
+      success: true,
+      vacancy
+    });
+    
+  } catch (error) {
+    console.error('Ошибка получения вакансии:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Ошибка сервера' 
+    });
+  }
 });
 
 // Получение резюме с фильтрацией и пагинацией
