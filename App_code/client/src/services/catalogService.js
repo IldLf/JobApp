@@ -23,11 +23,16 @@ class CatalogService {
         }
     }
 
-    async getVacancies(filters = {}, page = 1, limit = 5) {
+    async getVacancies(filters = {}, page = 1, limit = 5, search = '') {
         try {
             const params = new URLSearchParams();
             params.append('page', page);
             params.append('limit', limit);
+
+            // Добавляем поисковый запрос
+            if (search && search.trim() !== '') {
+                params.append('search', search.trim());
+            }
 
             Object.keys(filters).forEach(key => {
                 const value = filters[key];
@@ -46,11 +51,16 @@ class CatalogService {
         }
     }
 
-    async getResumes(filters = {}, page = 1, limit = 5) {
+    async getResumes(filters = {}, page = 1, limit = 5, search = '') {
         try {
             const params = new URLSearchParams();
             params.append('page', page);
             params.append('limit', limit);
+
+            // Добавляем поисковый запрос
+            if (search && search.trim() !== '') {
+                params.append('search', search.trim());
+            }
 
             // Убираем city из параметров для резюме
             const { city, ...resumeFilters } = filters;

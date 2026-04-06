@@ -11,6 +11,7 @@ const JobsCatalog = ({ user, onLogout }) => {
     const [resumes, setResumes] = useState([]);
     const [professions, setProfessions] = useState([]);
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Пагинация
     const [vacancyPagination, setVacancyPagination] = useState({
@@ -82,7 +83,8 @@ const JobsCatalog = ({ user, onLogout }) => {
             const result = await catalogService.getVacancies(
                 vacancyFilters,
                 vacancyPagination.currentPage,
-                5
+                5,
+                searchQuery
             );
             setVacancies(result.vacancies || []);
             setVacancyPagination({
@@ -96,7 +98,7 @@ const JobsCatalog = ({ user, onLogout }) => {
         if (activeSection === 'vacancies') {
             loadVacancies();
         }
-    }, [activeSection, vacancyFilters, vacancyPagination.currentPage]);
+    }, [activeSection, vacancyFilters, vacancyPagination.currentPage, searchQuery]);
 
     // Загрузка резюме при изменении фильтров резюме или страницы
     useEffect(() => {
@@ -105,7 +107,8 @@ const JobsCatalog = ({ user, onLogout }) => {
             const result = await catalogService.getResumes(
                 resumeFilters,
                 resumePagination.currentPage,
-                5
+                5,
+                searchQuery
             );
             setResumes(result.resumes || []);
             setResumePagination({
@@ -119,7 +122,17 @@ const JobsCatalog = ({ user, onLogout }) => {
         if (activeSection === 'resumes') {
             loadResumes();
         }
-    }, [activeSection, resumeFilters, resumePagination.currentPage]);
+    }, [activeSection, resumeFilters, resumePagination.currentPage, searchQuery]);
+
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value);
+        // Сбрасываем на первую страницу при изменении поиска
+        if (activeSection === 'vacancies') {
+            setVacancyPagination(prev => ({ ...prev, currentPage: 1 }));
+        } else {
+            setResumePagination(prev => ({ ...prev, currentPage: 1 }));
+        }
+    };
 
     const handleVacancyFilterChange = (key, value) => {
         setVacancyFilters(prev => ({ ...prev, [key]: value }));
@@ -294,7 +307,13 @@ const JobsCatalog = ({ user, onLogout }) => {
             {/* Строка поиска */}
             <div className="search-section">
                 <h2 className="search-title">Поиск вакансий и резюме</h2>
-                <input type="text" className="search-input" placeholder="Введите профессию, навыки или ключевые слова..." />
+                <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Введите профессию, навыки или ключевые слова..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                />
                 <div className="search-hint">Например: Python разработчик, аналитик данных, дизайнер</div>
             </div>
 
