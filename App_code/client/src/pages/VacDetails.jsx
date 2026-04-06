@@ -128,7 +128,7 @@ const VacDetails = () => {
   const { Company, Profession } = vacancy;
 
   return (
-    <>
+    <div className="main-container">
       {/* ХЭДЭР — ИСПОЛЬЗУЕМ СУЩЕСТВУЮЩИЙ КОМПОНЕНТ */}
       <Header user={user} onLogout={handleLogout} />
 
@@ -247,7 +247,7 @@ const VacDetails = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

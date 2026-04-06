@@ -537,6 +537,7 @@ app.get('/api/resume-cities', async (req, res) => {
 });
 
 // Получение вакансий с фильтрацией и пагинацией
+// Получение вакансий с фильтрацией и пагинацией
 app.get('/api/vacancies', async (req, res) => {
     try {
         const {
@@ -547,7 +548,8 @@ app.get('/api/vacancies', async (req, res) => {
             salary_to,
             employment_type,
             page = 1,
-            limit = 5
+            limit = 5,
+            search = ''
         } = req.query;
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -587,16 +589,49 @@ app.get('/api/vacancies', async (req, res) => {
             whereClause.salary_from = { [Op.lte]: parseInt(salary_to) };
         }
 
-        // Получаем общее количество
-        const total = await Vacancy.count({ where: whereClause });
+        // Поиск по регулярному выражению
+        let searchCondition = null;
+        if (search && search.trim() !== '') {
+            const searchTerms = search.trim().toLowerCase().split(/\s+/);
+
+            // Создаем условия для каждого термина
+            const termConditions = searchTerms.map(term => ({
+                [Op.or]: [
+                    { title: { [Op.like]: `%${term}%` } },
+                    { description: { [Op.like]: `%${term}%` } },
+                    { experience_required: { [Op.like]: `%${term}%` } },
+                    { employment_type: { [Op.like]: `%${term}%` } },
+                    { city: { [Op.like]: `%${term}%` } },
+                    { '$Company.name$': { [Op.like]: `%${term}%` } },
+                    { '$Profession.name$': { [Op.like]: `%${term}%` } }
+                ]
+            }));
+
+            // Все термины должны совпадать (AND)
+            searchCondition = { [Op.and]: termConditions };
+        }
+
+        // Формируем полное условие WHERE
+        let finalWhereClause = { ...whereClause };
+        if (searchCondition) {
+            finalWhereClause = { [Op.and]: [whereClause, searchCondition] };
+        }
+
+        // Получаем общее количество (с include для поиска по связанным таблицам)
+        const total = await Vacancy.count({
+            where: finalWhereClause,
+            include: includeClause,
+            distinct: true
+        });
 
         // Получаем вакансии с пагинацией
         const vacancies = await Vacancy.findAll({
-            where: whereClause,
+            where: finalWhereClause,
             include: includeClause,
             order: [['created_at', 'DESC']],
             limit: parseInt(limit),
-            offset: offset
+            offset: offset,
+            distinct: true
         });
 
         res.json({
@@ -611,7 +646,6 @@ app.get('/api/vacancies', async (req, res) => {
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
-
 // Получение одной вакансии по ID
 app.get('/api/vacancies/:id', async (req, res) => {
   try {
@@ -659,6 +693,7 @@ app.get('/api/vacancies/:id', async (req, res) => {
 });
 
 // Получение резюме с фильтрацией и пагинацией
+// Получение резюме с фильтрацией и пагинацией
 app.get('/api/resumes', async (req, res) => {
     try {
         const {
@@ -667,7 +702,8 @@ app.get('/api/resumes', async (req, res) => {
             salary_from,
             salary_to,
             page = 1,
-            limit = 5
+            limit = 5,
+            search = ''
         } = req.query;
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -705,16 +741,48 @@ app.get('/api/resumes', async (req, res) => {
             }
         }
 
-        // Получаем общее количество
-        const total = await Resume.count({ where: whereClause });
+        // Поиск по регулярному выражению
+        let searchCondition = null;
+        if (search && search.trim() !== '') {
+            const searchTerms = search.trim().toLowerCase().split(/\s+/);
+
+            // Создаем условия для каждого термина
+            const termConditions = searchTerms.map(term => ({
+                [Op.or]: [
+                    { title: { [Op.like]: `%${term}%` } },
+                    { about: { [Op.like]: `%${term}%` } },
+                    { experience: { [Op.like]: `%${term}%` } },
+                    { '$Profession.name$': { [Op.like]: `%${term}%` } },
+                    { '$Applicant.User.first_name$': { [Op.like]: `%${term}%` } },
+                    { '$Applicant.User.last_name$': { [Op.like]: `%${term}%` } }
+                ]
+            }));
+
+            // Все термины должны совпадать (AND)
+            searchCondition = { [Op.and]: termConditions };
+        }
+
+        // Формируем полное условие WHERE
+        let finalWhereClause = { ...whereClause };
+        if (searchCondition) {
+            finalWhereClause = { [Op.and]: [whereClause, searchCondition] };
+        }
+
+        // Получаем общее количество (с include для поиска по связанным таблицам)
+        const total = await Resume.count({
+            where: finalWhereClause,
+            include: includeClause,
+            distinct: true
+        });
 
         // Получаем резюме с пагинацией
         const resumes = await Resume.findAll({
-            where: whereClause,
+            where: finalWhereClause,
             include: includeClause,
             order: [['created_at', 'DESC']],
             limit: parseInt(limit),
-            offset: offset
+            offset: offset,
+            distinct: true
         });
 
         // Форматируем данные для отправки
@@ -744,7 +812,6 @@ app.get('/api/resumes', async (req, res) => {
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
-
 // Создание отклика на вакансию
 app.post('/api/vacancy-responses', async (req, res) => {
     try {
