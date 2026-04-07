@@ -85,7 +85,7 @@ const formatSalary = (salaryFrom, salaryTo) => {
 const JobsAccount = ({user, onLogout}) => {
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState('resumes');
+    const [activeTab, setActiveTab] = useState('settings');
     const [message, setMessage] = useState({ text: '', type: 'info', visible: false });
     const [loading, setLoading] = useState(true);
 
@@ -94,14 +94,73 @@ const JobsAccount = ({user, onLogout}) => {
     const [userResumeData, setUserResumeData] = useState([]);
 
     const [userResponsesData, setUserResponsesData] = useState([]);
-    const [responsesStats, setResponsesStats] = useState(null);
     const [resumeResponses, setResumeResponses] = useState([]);
 
-    const [stats, setStats] = useState(null);
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        birth_date: '',
+        city: '',
+        about: '',
+        profession: '',
+        experience_years: '',
+        expected_salary: '',
+        education: ''
+    });
+    const [passwordData, setPasswordData] = useState({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+    });
+
+    const [saving, setSaving] = useState(false);
+
+
+    const [employerData, setEmployerData] = useState(null);
+    const [employerVacancies, setEmployerVacancies] = useState([]);
+    const [employerResponses, setEmployerResponses] = useState([]);
+    const [employerResumeResponses, setEmployerResumeResponses] = useState([]);
+
 
     useEffect(() => { 
         loadUserData(); 
     }, []);
+
+    useEffect(() => { 
+        const currentUser = localStorage.getItem('user');
+        if (!currentUser) return;
+        const user = JSON.parse(currentUser);
+
+        if (user.user_type === 'applicant' && userData && userApplicantData) {
+            setFormData({
+                first_name: userData.first_name || '',
+                last_name: userData.last_name || '',
+                email: userData.email || '',
+                phone: userData.phone || '',
+                birth_date: userApplicantData.birth_date || '',
+                city: userApplicantData.city || '',
+                about: userApplicantData.about || '',
+                profession: userApplicantData.profession || '',
+                experience_years: userApplicantData.experience_years || '',
+                expected_salary: userApplicantData.expected_salary || '',
+                education: userApplicantData.education || ''
+            });
+        }
+        else if (user.user_type === 'employer' && userData && employerData) {
+            setFormData({
+                first_name: userData.first_name || '',
+                last_name: userData.last_name || '',
+                email: userData.email || '',
+                phone: userData.phone || '',
+                company_name: employerData.name || '',
+                company_description: employerData.description || '',
+                company_city: employerData.city || '',
+                logo_url: employerData.logo_url || ''
+            });
+        }
+    }, [userData, userApplicantData, employerData]);
 
     const loadUserData = async () => { // функция загрузки данных 
         const currentUser = localStorage.getItem('user');
@@ -116,57 +175,72 @@ const JobsAccount = ({user, onLogout}) => {
         try {
             const user = JSON.parse(currentUser);
             
-            // получаем профиль искателя работ
-            const profileResult = await profileService.getApplicantData(user.id);
-            console.log('Данные пользователя:', profileResult);
-            
-            if (profileResult.success) {
-                setUserData(profileResult.profile.user);
-                setUserApplicantData(profileResult.profile.applicant);
-            } else {
-                console.error('Ошибка загрузки профиля:', profileResult.error);
-            }
-
-            const resumesResult = await profileService.getApplicantResumes(user.id);
-            console.log('Резюме:', resumesResult);
-            
-            if (resumesResult.success) {
-                setUserResumeData(resumesResult.resumes || []);
-            }
-
-            // получаем статистику
-            const statsResult = await profileService.getDashboardStats(user.id);
-            console.log('Статистика:', statsResult);
-            
-            if (statsResult.success) {
-                setStats(statsResult.stats);
-            }
-
-            // получаем отклики (если соискатель)
             if (user.user_type === 'applicant') {
-                const responsesResult = await profileService.getResponsesData(user.id);
-                console.log('Отклики:', responsesResult);
-
-                if (responsesResult.success) {
-                    setUserResponsesData(responsesResult.responses || []);
-                    if (responsesResult.stats) {
-                        setResponsesStats(responsesResult.stats);
-                        // объединяем со статистикой дашборда
-                        setStats(prev => ({ ...prev, ...responsesResult.stats }));
-                    }
+                // получаем профиль искателя работ
+                const profileResult = await profileService.getApplicantData(user.id);
+                console.log('Данные пользователя:', profileResult);
+                
+                if (profileResult.success) {
+                    setUserData(profileResult.profile.user);
+                    setUserApplicantData(profileResult.profile.applicant);
                 } else {
-                    console.error('Ошибка загрузки откликов:', responsesResult.error);
-                    setUserResponsesData([]);
+                    console.error('Ошибка загрузки профиля:', profileResult.error);
                 }
 
-                const resumeResponsesResult = await profileService.getApplicantResumeResponses(user.id);
-                console.log('Приглашения:', resumeResponsesResult);
+                const resumesResult = await profileService.getApplicantResumes(user.id);
+                console.log('Резюме:', resumesResult);
+                
+                if (resumesResult.success) {
+                    setUserResumeData(resumesResult.resumes || []);
+                }
 
-                if (resumeResponsesResult.success) {
-                    setResumeResponses(resumeResponsesResult.resume_responses || []);
+
+                // получаем отклики (если соискатель)
+                if (user.user_type === 'applicant') {
+                    const responsesResult = await profileService.getResponsesData(user.id);
+                    console.log('Отклики:', responsesResult);
+
+                    if (responsesResult.success) {
+                        setUserResponsesData(responsesResult.responses || []);
+                    } else {
+                        console.error('Ошибка загрузки откликов:', responsesResult.error);
+                        setUserResponsesData([]);
+                    }
+
+                    const resumeResponsesResult = await profileService.getApplicantResumeResponses(user.id);
+                    console.log('Приглашения:', resumeResponsesResult);
+
+                    if (resumeResponsesResult.success) {
+                        setResumeResponses(resumeResponsesResult.resume_responses || []);
+                    }
                 }
             }
-            
+            else if (user.user_type === 'employer') {
+                // Загружаем профиль работодателя
+                const profileResult = await profileService.getEmployerData(user.id);
+                if (profileResult.success) {
+                    setUserData(profileResult.profile.user);
+                    setEmployerData(profileResult.profile.company);
+                }
+                
+                // Загружаем вакансии
+                const vacanciesResult = await profileService.getEmployerVacancies(user.id);
+                if (vacanciesResult.success) {
+                    setEmployerVacancies(vacanciesResult.vacancies || []);
+                }
+                
+                // Загружаем отклики на вакансии
+                const responsesResult = await profileService.getEmployerResponses(user.id);
+                if (responsesResult.success) {
+                    setEmployerResponses(responsesResult.responses || []);
+                }
+                
+                // Загружаем отправленные приглашения
+                const resumeResponsesResult = await profileService.getEmployerResumeResponses(user.id);
+                if (resumeResponsesResult.success) {
+                    setEmployerResumeResponses(resumeResponsesResult.resume_responses || []);
+                }
+            }
         } catch (error) {
             console.error('!!!Ошибка загрузки данных:', error);
             setUserResponsesData([]);
@@ -174,6 +248,138 @@ const JobsAccount = ({user, onLogout}) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSaveProfile = async () => {
+        setSaving(true);
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            let result;
+            
+            if (currentUser.user_type === 'applicant') {
+                // Обновляем профиль
+                result = await profileService.updateApplicantProfile(currentUser.id, {
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    phone: formData.phone,
+                    city: formData.city,
+                    profession: formData.profession,
+                    experience_years: parseInt(formData.experience_years) || 0,
+                    about: formData.about,
+                    expected_salary: parseInt(formData.expected_salary) || null,
+                    education: formData.education,
+                    birth_date: formData.birth_date
+                });
+            }
+            else if (currentUser.user_type === 'employer') {
+                result = await profileService.updateEmployerProfile(currentUser.id, {
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    phone: formData.phone,
+                    company_name: formData.company_name,
+                    company_description: formData.company_description,
+                    company_city: formData.company_city,
+                    logo_url: formData.logo_url
+                });
+            }
+            if (result.success) {
+                showMessage('Профиль успешно сохранен!', 'success');
+                await loadUserData();
+            } else {
+                showMessage(result.error || 'Ошибка сохранения профиля', 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при сохранении', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCancelChanges = () => {
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        if (currentUser.user_type === 'applicant') {
+            if (userData && userApplicantData) {
+                setFormData({
+                    first_name: userData.first_name || '',
+                    last_name: userData.last_name || '',
+                    email: userData.email || '',
+                    phone: userData.phone || '',
+                    birth_date: userApplicantData.birth_date || '',
+                    city: userApplicantData.city || '',
+                    about: userApplicantData.about || '',
+                    profession: userApplicantData.profession || '',
+                    experience_years: userApplicantData.experience_years || '',
+                    expected_salary: userApplicantData.expected_salary || '',
+                    education: userApplicantData.education || ''
+                });
+            }
+        }
+        else if (currentUser.user_type === 'employer') {
+            if (userData && employerData) {
+                setFormData({
+                    first_name: userData.first_name || '',
+                    last_name: userData.last_name || '',
+                    email: userData.email || '',
+                    phone: userData.phone || '',
+                    company_name: employerData.name || '',
+                    company_description: employerData.description || '',
+                    company_city: employerData.city || '',
+                    logo_url: employerData.logo_url || ''
+                });
+            }
+        }
+        setPasswordData({
+            current_password: '',
+            new_password: '',
+            confirm_password: ''
+        });
+        
+        showMessage('Изменения отменены', 'info');
+    };
+
+    const handleSavePassword = async () => {
+        if (passwordData.new_password !== passwordData.confirm_password) {
+            showMessage('Новый пароль и подтверждение не совпадают', 'error');
+            return;
+        }
+        
+        if (passwordData.new_password.length < 6) {
+            showMessage('Пароль должен содержать минимум 6 символов', 'error');
+            return;
+        }
+        
+        setSaving(true);
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            
+            const result = await profileService.updatePassword(currentUser.id, {
+                current_password: passwordData.current_password,
+                new_password: passwordData.new_password
+            });
+            
+            if (result.success) {
+                showMessage('Пароль успешно изменен!', 'success');
+                setPasswordData({
+                    current_password: '',
+                    new_password: '',
+                    confirm_password: ''
+                });
+            } else {
+                showMessage(result.error || 'Ошибка изменения пароля', 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при изменении пароля', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleFormChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handlePasswordChange = (field, value) => {
+        setPasswordData(prev => ({ ...prev, [field]: value }));
     };
 
     if (loading) { // экран загрузки
@@ -207,8 +413,24 @@ const JobsAccount = ({user, onLogout}) => {
             default:
                 return 'Неизвестный статус';
         }
-        return '';
     }
+
+    const getTabs = () => {
+        const currentUser = localStorage.getItem('user');
+        if (!currentUser) return TABS;
+        const user = JSON.parse(currentUser);
+        
+        if (user.user_type === 'applicant') {
+            return TABS;
+        } else {
+            return [
+                { id: 'vacancies', label: 'Мои вакансии' },
+                { id: 'received-responses', label: 'Полученные отклики' },
+                { id: 'sent-invites', label: 'Отправленные приглашения' },
+                { id: 'settings', label: 'Настройки профиля' }
+            ];
+        }
+    };
 
     return (
         <div className="main-container">
@@ -224,34 +446,50 @@ const JobsAccount = ({user, onLogout}) => {
                     </div>
                     <div className="profile-title">
                         <h1>{userData.first_name} {userData.last_name}</h1>
-                        <p>{userApplicantData?.profession || 'Профессия не указана'} • {userApplicantData?.city || 'Город не указан'}</p>
+                        {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
+                            <p>{userApplicantData?.profession || 'Профессия не указана'} • {userApplicantData?.city || 'Город не указан'}</p>
+                        ) : (
+                            <p>{formData?.company_name || 'Имя компании не указано'} • {formData?.company_city || 'Город не указан'}</p>
+                        )}
                         <p>{userData.email} • {userData.phone || 'Телефон не указан'}</p>
                     </div>
                 </div>
-
-                <div className="profile-stats">
-                    <div className="stat-card">
-                        <div className="stat-number">{stats?.total_resumes || userResumeData.length || 0}</div>
-                        <div className="stat-label">Резюме</div>
+                {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
+                    <div className="profile-stats">
+                        <div className="stat-card">
+                            <div className="stat-number">{userResumeData?.length || 0}</div>
+                            <div className="stat-label">Резюме</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{userResponsesData?.length || 0}</div>
+                            <div className="stat-label">Откликов</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{resumeResponses?.length || 0}</div>
+                            <div className="stat-label">Приглашений</div>
+                        </div>
                     </div>
-                    <div className="stat-card">
-                        <div className="stat-number">{stats?.total_responses || userResponsesData.length || 0}</div>
-                        <div className="stat-label">Откликов</div>
+                ) : (
+                    <div className="profile-stats">
+                        <div className="stat-card">
+                            <div className="stat-number">{employerVacancies?.length || 0}</div>
+                            <div className="stat-label">Резюме</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{employerResponses?.length || 0}</div>
+                            <div className="stat-label">Откликов</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{employerResumeResponses?.length || 0}</div>
+                            <div className="stat-label">Приглашений</div>
+                        </div>
                     </div>
-                    <div className="stat-card">
-                        <div className="stat-number">{resumeResponses.length || resumeResponses?.length || 0}</div>
-                        <div className="stat-label">Приглашений</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-number">{stats?.profile_views || 0}</div>
-                        <div className="stat-label">Просмотров</div>
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Табы */}
             <div className="account-tabs">
-                {TABS.map(tab => (
+                {getTabs().map(tab => (
                     <button
                         key={tab.id}
                         className={`account-tab ${activeTab === tab.id ? 'active' : ''}`}
@@ -435,7 +673,8 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Имя</label>
                                     <input 
                                         type="text" 
-                                        defaultValue={userData.first_name || ''} 
+                                        value={formData.first_name} 
+                                        onChange={(e) => handleFormChange('first_name', e.target.value)}
                                         placeholder="Введите имя" 
                                     />
                                 </div>
@@ -443,7 +682,8 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Фамилия</label>
                                     <input 
                                         type="text" 
-                                        defaultValue={userData.last_name || ''} 
+                                        value={formData.last_name}
+                                        onChange={(e) => handleFormChange('last_name', e.target.value)}
                                         placeholder="Введите фамилию" 
                                     />
                                 </div>
@@ -451,28 +691,39 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Email</label>
                                     <input 
                                         type="email" 
-                                        defaultValue={userData.email || ''} 
-                                        placeholder="Введите email" 
+                                        value={formData.email}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5' }}
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Телефон</label>
                                     <input 
                                         type="tel" 
-                                        defaultValue={userData.phone || ''} 
+                                        value={formData.phone}
+                                        onChange={(e) => handleFormChange('phone', e.target.value)}
                                         placeholder="Введите телефон" 
                                     />
                                 </div>
+
+                                {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
                                 <div className="form-group">
                                     <label>Дата рождения</label>
                                     <input 
                                         type="date" 
-                                        defaultValue={userApplicantData?.birth_date || ''} 
+                                        value={formData.birth_date}
+                                        onChange={(e) => handleFormChange('birth_date', e.target.value)}
                                     />
                                 </div>
+                                ) : ('')}
+
+                                {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
                                 <div className="form-group">
                                     <label>Город</label>
-                                    <select defaultValue={userApplicantData?.city || ''}>
+                                    <select 
+                                        value={formData.city}
+                                        onChange={(e) => handleFormChange('city', e.target.value)}
+                                    >
                                         <option value="">Выберите город</option>
                                         {CITIES.map(city => (
                                             <option key={city.value} value={city.value}>
@@ -481,59 +732,95 @@ const JobsAccount = ({user, onLogout}) => {
                                         ))}
                                     </select>
                                 </div>
+                                ) : ('')}
+
+                                {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
                                 <div className="form-group full-width">
                                     <label>О себе</label>
                                     <textarea 
-                                        defaultValue={userApplicantData?.about || ''}
+                                        value={formData.about}
+                                        onChange={(e) => handleFormChange('about', e.target.value)}
                                         placeholder="Расскажите о себе"
                                         rows="4"
                                     />
                                 </div>
+                                ) : ('')}
                             </div>
                         </div>
-
                         {/* Профессиональная информация */}
-                        <div className="settings-section">
-                            <h3 className="settings-title">Профессиональная информация</h3>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label>Профессия</label>
-                                    <select defaultValue={userApplicantData?.profession || ''}>
-                                        <option value="">Выберите профессию</option>
-                                        {PROFESSIONS.map(prof => (
-                                            <option key={prof.value} value={prof.label}>
-                                                {prof.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Опыт работы (лет)</label>
-                                    <input 
-                                        type="number" 
-                                        defaultValue={userApplicantData?.experience_years || 0} 
-                                        min="0" 
-                                        max="50" 
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Ожидаемая зарплата</label>
-                                    <input 
-                                        type="number" 
-                                        defaultValue={userApplicantData?.expected_salary || ''} 
-                                        placeholder="Введите сумму" 
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Образование</label>
-                                    <input 
-                                        type="text" 
-                                        defaultValue={userApplicantData?.education || ''} 
-                                        placeholder="Введите образование" 
-                                    />
+                        {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
+                            <div className="settings-section">
+                                <h3 className="settings-title">Профессиональная информация</h3>
+                                <div className="form-grid">
+                                    <div className="form-group">
+                                        <label>Профессия</label>
+                                        <select 
+                                            value={formData.profession}
+                                            onChange={(e) => handleFormChange('profession', e.target.value)}
+                                        >
+                                            <option value="">Выберите профессию</option>
+                                            {PROFESSIONS.map(prof => (
+                                                <option key={prof.value} value={prof.label}>
+                                                    {prof.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Опыт работы (лет)</label>
+                                        <input 
+                                            type="number" 
+                                            value={formData.experience_years}
+                                            onChange={(e) => handleFormChange('experience_years', e.target.value)}
+                                            min="0" 
+                                            max="50" 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Ожидаемая зарплата</label>
+                                        <input 
+                                            type="number" 
+                                            value={formData.expected_salary}
+                                            onChange={(e) => handleFormChange('expected_salary', e.target.value)}
+                                            placeholder="Введите сумму" 
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Образование</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.education}
+                                            onChange={(e) => handleFormChange('education', e.target.value)}
+                                            placeholder="Введите образование" 
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            // Поля для работодателя
+                            <div className="settings-section">
+                                <h3 className="settings-title">Информация о компании</h3>
+                                <div className="form-grid">
+                                    <div className="form-group">
+                                        <label>Название компании</label>
+                                        <input type="text" value={formData.company_name} onChange={(e) => handleFormChange('company_name', e.target.value)} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Город</label>
+                                        <select value={formData.company_city} onChange={(e) => handleFormChange('company_city', e.target.value)}>
+                                            <option value="">Выберите город</option>
+                                            {CITIES.map(city => (
+                                                <option key={city.value} value={city.value}>{city.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group full-width">
+                                        <label>Описание компании</label>
+                                        <textarea value={formData.company_description} onChange={(e) => handleFormChange('company_description', e.target.value)} rows="4" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Безопасность */}
                         <div className="settings-section">
@@ -543,6 +830,8 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Текущий пароль</label>
                                     <input 
                                         type="password" 
+                                        value={passwordData.current_password}
+                                        onChange={(e) => handlePasswordChange('current_password', e.target.value)}
                                         placeholder="Введите текущий пароль" 
                                     />
                                 </div>
@@ -550,6 +839,8 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Новый пароль</label>
                                     <input 
                                         type="password" 
+                                        value={passwordData.new_password}
+                                        onChange={(e) => handlePasswordChange('new_password', e.target.value)}
                                         placeholder="Введите новый пароль" 
                                     />
                                 </div>
@@ -557,9 +848,20 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Подтверждение пароля</label>
                                     <input 
                                         type="password" 
+                                        value={passwordData.confirm_password}
+                                        onChange={(e) => handlePasswordChange('confirm_password', e.target.value)}
                                         placeholder="Повторите новый пароль" 
                                     />
                                 </div>
+                            </div>
+                            <div style={{ marginTop: '15px' }}>
+                                <button 
+                                    className="btn btn-outline" 
+                                    onClick={handleSavePassword}
+                                    disabled={saving}
+                                >
+                                    {saving ? 'Сохранение...' : 'Изменить пароль'}
+                                </button>
                             </div>
                         </div>
 
@@ -588,16 +890,186 @@ const JobsAccount = ({user, onLogout}) => {
                         <div style={{ display: 'flex', gap: '15px', marginTop: '30px' }}>
                             <button 
                                 className="btn" 
-                                onClick={() => showMessage('Изменения сохранены (демо-режим)', 'success')}
+                                onClick={handleSaveProfile}
+                                disabled={saving}
                             >
                                 Сохранить изменения
                             </button>
                             <button 
                                 className="btn btn-outline" 
-                                onClick={() => showMessage('Изменения отменены')}
-                            >
+                                onClick={handleCancelChanges}
+                            >   
                                 Отмена
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Работодатель - Вакансии */}
+            {activeTab === 'vacancies' && (
+                <div className="tab-content active">
+                    <div className="card">
+                        <div className="card-header">
+                            <h2 className="card-title">Мои вакансии</h2>
+                            <button className="btn" onClick={() => showMessage('Создание вакансии (демо-режим)')}>
+                                + Создать вакансию
+                            </button>
+                        </div>
+                        <div className="items-list">
+                            {employerVacancies.length === 0 ? (
+                                <div className="empty-state">
+                                    <p className="empty-state-p">У вас пока нет вакансий :\</p>
+                                    <button className="btn" onClick={() => showMessage('Создать вакансию')}>
+                                        Создать первую вакансию
+                                    </button>
+                                </div>
+                            ) : (
+                                employerVacancies.map(vacancy => (
+                                    <div key={vacancy.id} className="item-card">
+                                        <div className="item-header">
+                                            <span className="item-title">{vacancy.title}</span>
+                                            <span className={`item-status ${vacancy.is_active ? 'status-active' : 'status-inactive'}`}>
+                                                {vacancy.is_active ? 'Активна' : 'Неактивна'}
+                                            </span>
+                                        </div>
+                                        <div className="item-meta">
+                                            {vacancy.city} • {vacancy.employment_type === 'full-time' ? 'Полная занятость' : vacancy.employment_type}
+                                        </div>
+                                        <div className="item-meta">
+                                            {vacancy.salary_from && vacancy.salary_to 
+                                                ? `${vacancy.salary_from.toLocaleString()} - ${vacancy.salary_to.toLocaleString()} ₽`
+                                                : vacancy.salary_from ? `от ${vacancy.salary_from.toLocaleString()} ₽`
+                                                : vacancy.salary_to ? `до ${vacancy.salary_to.toLocaleString()} ₽`
+                                                : 'з/п не указана'}
+                                        </div>
+                                        <div className="vacancy-description">
+                                            {vacancy.description?.substring(0, 150)}...
+                                        </div>
+                                        <div className="item-actions">
+                                            <button className="item-action-btn" onClick={() => showMessage('Редактировать вакансию (демо)')}>
+                                                Редактировать
+                                            </button>
+                                            <button className="item-action-btn" onClick={() => showMessage('Деактивировать вакансию (демо)')}>
+                                                {vacancy.is_active ? 'Деактивировать' : 'Активировать'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Работодатель - Полученные отклики */}
+            {activeTab === 'received-responses' && (
+                <div className="tab-content active">
+                    <div className="card">
+                        <div className="card-header">
+                            <h2 className="card-title">Отклики на вакансии</h2>
+                        </div>
+                        <div className="items-list">
+                            {employerResponses.length === 0 ? (
+                                <div className="empty-state">
+                                    <p className="empty-state-p">Пока нет откликов на ваши вакансии</p>
+                                </div>
+                            ) : (
+                                employerResponses.map(response => {
+                                    const statusInfo = formatResponseStatus(response.status);
+                                    return (
+                                        <div key={response.response_id} className="item-card">
+                                            <div className="item-header">
+                                                <span className="item-title">{response.vacancy_title}</span>
+                                                <span className={`item-status ${statusInfo.class}`}>
+                                                    {statusInfo.text}
+                                                </span>
+                                            </div>
+                                            <div className="item-company">
+                                                {response.first_name} {response.last_name} • {response.profession_name || 'Профессия не указана'}
+                                            </div>
+                                            <div className="item-meta">
+                                                {response.email} • {response.phone || 'Телефон не указан'}
+                                            </div>
+                                            <div className="item-meta">
+                                                Ожидаемая зарплата: {response.expected_salary ? `${response.expected_salary.toLocaleString()} ₽` : 'не указана'} • Опыт: {response.experience_years || 0} лет
+                                            </div>
+                                            {response.cover_letter && (
+                                                <div className="vacancy-description">
+                                                    💬 {response.cover_letter}
+                                                </div>
+                                            )}
+                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                                                Отклик получен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
+                                            </div>
+                                            <div className="item-actions">
+                                                <button className="item-action-btn" onClick={() => showMessage('Просмотреть резюме кандидата (демо)')}>
+                                                    Просмотреть резюме
+                                                </button>
+                                                {response.status === 'pending' && (
+                                                    <>
+                                                        <button className="item-action-btn" onClick={() => showMessage('Принять отклик (демо)')}>
+                                                            Принять
+                                                        </button>
+                                                        <button className="item-action-btn" onClick={() => showMessage('Отклонить отклик (демо)')}>
+                                                            Отклонить
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Работодатель - Отправленные приглашения */}
+            {activeTab === 'sent-invites' && (
+                <div className="tab-content active">
+                    <div className="card">
+                        <div className="card-header">
+                            <h2 className="card-title">Отправленные приглашения</h2>
+                        </div>
+                        <div className="items-list">
+                            {employerResumeResponses.length === 0 ? (
+                                <div className="empty-state">
+                                    <p className="empty-state-p">Вы еще не отправляли приглашения</p>
+                                </div>
+                            ) : (
+                                employerResumeResponses.map(invite => {
+                                    const statusInfo = formatResponseStatus(invite.status);
+                                    return (
+                                        <div key={invite.id} className="item-card">
+                                            <div className="item-header">
+                                                <span className="item-title">{invite.resume_title}</span>
+                                                <span className={`item-status ${statusInfo.class}`}>
+                                                    {statusInfo.text}
+                                                </span>
+                                            </div>
+                                            <div className="item-company">
+                                                {invite.first_name} {invite.last_name} • {invite.profession_name || 'Профессия не указана'}
+                                            </div>
+                                            <div className="item-meta">
+                                                {invite.email} • {invite.phone || 'Телефон не указан'}
+                                            </div>
+                                            <div className="vacancy-description">
+                                                💬 {invite.message || 'Приглашение без сопроводительного текста'}
+                                            </div>
+                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                                                Отправлено: {new Date(invite.created_at).toLocaleDateString('ru-RU')}
+                                            </div>
+                                            <div className="item-actions">
+                                                <button className="item-action-btn" onClick={() => showMessage('Отменить приглашение (демо)')}>
+                                                    Отменить
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>

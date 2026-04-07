@@ -144,6 +144,118 @@ app.get('/api/applicant/profile/:userId', async (req, res) => {
     }
 });
 
+// обновление данных пользователя при нажатии на кнопку Сохранить изменения в личном кабинете
+app.put('/api/applicant/profile/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const {
+            first_name,
+            last_name,
+            phone,
+            city,
+            profession,
+            experience_years,
+            about,
+            expected_salary,
+            education,
+            birth_date
+        } = req.body;
+
+        await User.update(
+            { first_name, last_name, phone },
+            { where: { id: userId } }
+        );
+
+        const applicant = await Applicant.findOne({ where: { user_id: userId } });
+        
+        if (!applicant) {
+            return res.status(404).json({
+                success: false,
+                error: 'Профиль соискателя не найден'
+            });
+        }
+
+        let professionId = null;
+        if (profession) {
+            const professionRecord = await Profession.findOne({ 
+                where: { name: profession } 
+            });
+            if (professionRecord) {
+                professionId = professionRecord.id;
+            }
+        }
+
+        await Applicant.update(
+            {
+                city,
+                profession_id: professionId,
+                experience_years,
+                about,
+                expected_salary,
+                education,
+                birth_date
+            },
+            { where: { user_id: userId } }
+        );
+
+        res.json({
+            success: true,
+            message: 'Профиль успешно обновлен'
+        });
+
+    } catch (error) {
+        console.error('Ошибка обновления профиля:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// обновление пароля пользователя при нажатии на кнопку обновить пароль
+app.put('/api/user/password/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const { current_password, new_password } = req.body;
+
+        // Находим пользователя
+        const user = await User.findByPk(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'Пользователь не найден'
+            });
+        }
+
+        // Проверяем текущий пароль
+        if (user.password_hash !== current_password) {
+            return res.status(401).json({
+                success: false,
+                error: 'Неверный текущий пароль'
+            });
+        }
+
+        // Обновляем пароль
+        await User.update(
+            { password_hash: new_password },
+            { where: { id: userId } }
+        );
+
+        res.json({
+            success: true,
+            message: 'Пароль успешно изменен'
+        });
+
+    } catch (error) {
+        console.error('Ошибка обновления пароля:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // данные о резюме пользователя
 app.get('/api/applicant/resumes/:userId', async (req, res) => {
     try {
@@ -269,91 +381,6 @@ app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
         
     } catch (error) {
         console.error('Ошибка получения резюме:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// статистика
-app.get('/api/dashboard/stats/:userId', async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        
-        // Определяем тип пользователя
-        const [user] = await sequelize.query(
-            'SELECT user_type FROM users WHERE id = ?',
-            { replacements: [userId], type: sequelize.QueryTypes.SELECT }
-        );
-        
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'Пользователь не найден'
-            });
-        }
-        
-        let stats = {};
-        
-        if (user.user_type === 'applicant') {
-            // Статистика для соискателя
-            const [applicantStats] = await sequelize.query(`
-                SELECT 
-                    (SELECT COUNT(*) FROM resumes r 
-                     JOIN applicants a ON r.applicant_id = a.id 
-                     WHERE a.user_id = ?) as total_resumes,
-                    (SELECT COUNT(*) FROM vacancy_responses vr 
-                     JOIN applicants a ON vr.applicant_id = a.id 
-                     WHERE a.user_id = ?) as total_responses,
-                    (SELECT COUNT(*) FROM vacancy_responses vr 
-                     JOIN applicants a ON vr.applicant_id = a.id 
-                     WHERE a.user_id = ? AND vr.status = 'accepted') as accepted_responses,
-                    (SELECT COALESCE(SUM(0), 0) FROM resumes r 
-                     JOIN applicants a ON r.applicant_id = a.id 
-                     LEFT JOIN vacancies v ON 1=1
-                     WHERE a.user_id = ?) as profile_views
-            `, {
-                replacements: [userId, userId, userId, userId],
-                type: sequelize.QueryTypes.SELECT
-            });
-            
-            stats = applicantStats[0];
-            
-        } else {
-            // Статистика для работодателя
-            const [employerStats] = await sequelize.query(`
-                SELECT 
-                    (SELECT COUNT(*) FROM vacancies v 
-                     JOIN companies c ON v.company_id = c.id 
-                     WHERE c.user_id = ?) as total_vacancies,
-                    (SELECT COUNT(*) FROM vacancy_responses vr 
-                     JOIN vacancies v ON vr.vacancy_id = v.id 
-                     JOIN companies c ON v.company_id = c.id 
-                     WHERE c.user_id = ?) as total_responses,
-                    (SELECT COUNT(*) FROM vacancy_responses vr 
-                     JOIN vacancies v ON vr.vacancy_id = v.id 
-                     JOIN companies c ON v.company_id = c.id 
-                     WHERE c.user_id = ? AND vr.status = 'pending') as pending_responses,
-                    (SELECT COALESCE(SUM(v.views), 0) FROM vacancies v 
-                     JOIN companies c ON v.company_id = c.id 
-                     WHERE c.user_id = ?) as total_views
-            `, {
-                replacements: [userId, userId, userId, userId],
-                type: sequelize.QueryTypes.SELECT
-            });
-            
-            stats = employerStats[0];
-        }
-        
-        res.json({
-            success: true,
-            user_type: user.user_type,
-            stats
-        });
-        
-    } catch (error) {
-        console.error('Ошибка получения статистики:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -905,6 +932,289 @@ app.post('/api/resume-responses', async (req, res) => {
         res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
+
+
+
+// ==================== ЭНДПОИНТЫ ДЛЯ РАБОТОДАТЕЛЯ ====================
+
+// Получение профиля компании и пользователя-работодателя
+app.get('/api/employer/profile/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        const query = `
+            SELECT 
+                u.id,
+                u.email,
+                u.first_name,
+                u.last_name,
+                u.phone,
+                u.created_at,
+                c.id as company_id,
+                c.name as company_name,
+                c.description as company_description,
+                c.city as company_city,
+                c.logo_url
+            FROM users u
+            LEFT JOIN companies c ON u.id = c.user_id
+            WHERE u.id = ? AND u.user_type = 'employer'
+        `;
+        
+        const [results] = await sequelize.query(query, {
+            replacements: [userId],
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        if (!results) {
+            return res.status(404).json({
+                success: false,
+                error: 'Профиль не найден'
+            });
+        }
+        
+        const profile = {
+            user: {
+                id: results.id,
+                email: results.email,
+                first_name: results.first_name,
+                last_name: results.last_name,
+                phone: results.phone,
+                created_at: results.created_at
+            },
+            company: {
+                id: results.company_id,
+                name: results.company_name,
+                description: results.company_description,
+                city: results.company_city,
+                logo_url: results.logo_url
+            }
+        };
+        
+        res.json({
+            success: true,
+            profile
+        });
+        
+    } catch (error) {
+        console.error('Ошибка получения профиля работодателя:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Обновление профиля работодателя
+app.put('/api/employer/profile/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const {
+            first_name,
+            last_name,
+            phone,
+            company_name,
+            company_description,
+            company_city,
+            logo_url
+        } = req.body;
+        
+        // Обновляем данные пользователя
+        await User.update(
+            { first_name, last_name, phone },
+            { where: { id: userId } }
+        );
+        
+        // Находим компанию
+        const company = await Company.findOne({ where: { user_id: userId } });
+        
+        if (!company) {
+            return res.status(404).json({
+                success: false,
+                error: 'Профиль компании не найден'
+            });
+        }
+        
+        // Обновляем данные компании
+        await Company.update(
+            {
+                name: company_name,
+                description: company_description,
+                city: company_city,
+                logo_url: logo_url
+            },
+            { where: { user_id: userId } }
+        );
+        
+        res.json({
+            success: true,
+            message: 'Профиль успешно обновлен'
+        });
+        
+    } catch (error) {
+        console.error('Ошибка обновления профиля работодателя:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Получение вакансий компании
+app.get('/api/employer/vacancies/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        const query = `
+            SELECT 
+                v.id,
+                v.title,
+                v.description,
+                v.salary_from,
+                v.salary_to,
+                v.city,
+                v.employment_type,
+                v.experience_required,
+                v.is_active,
+                v.created_at,
+                p.name as profession_name
+            FROM vacancies v
+            JOIN companies c ON v.company_id = c.id
+            LEFT JOIN professions p ON v.profession_id = p.id
+            WHERE c.user_id = ?
+            ORDER BY v.created_at DESC
+        `;
+        
+        const vacancies = await sequelize.query(query, {
+            replacements: [userId],
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        res.json({
+            success: true,
+            vacancies: vacancies || []
+        });
+        
+    } catch (error) {
+        console.error('Ошибка получения вакансий:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Получение откликов на вакансии компании
+app.get('/api/employer/responses/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        const query = `
+            SELECT 
+                vr.id as response_id,
+                vr.status,
+                vr.created_at as response_date,
+                vr.cover_letter,
+                v.id as vacancy_id,
+                v.title as vacancy_title,
+                v.salary_from,
+                v.salary_to,
+                v.city as vacancy_city,
+                a.id as applicant_id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.phone,
+                a.expected_salary,
+                a.experience_years,
+                p.name as profession_name
+            FROM vacancy_responses vr
+            JOIN vacancies v ON vr.vacancy_id = v.id
+            JOIN companies c ON v.company_id = c.id
+            JOIN applicants a ON vr.applicant_id = a.id
+            JOIN users u ON a.user_id = u.id
+            LEFT JOIN professions p ON a.profession_id = p.id
+            WHERE c.user_id = ?
+            ORDER BY vr.created_at DESC
+        `;
+        
+        const responses = await sequelize.query(query, {
+            replacements: [userId],
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        const stats = {
+            total: responses.length,
+            pending: responses.filter(r => r.status === 'pending').length,
+            accepted: responses.filter(r => r.status === 'accepted').length,
+            rejected: responses.filter(r => r.status === 'rejected').length,
+            viewed: responses.filter(r => r.status === 'viewed').length
+        };
+        
+        res.json({
+            success: true,
+            stats,
+            responses
+        });
+        
+    } catch (error) {
+        console.error('Ошибка получения откликов:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Получение отправленных приглашений (resume_responses)
+app.get('/api/employer/resume-responses/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        const query = `
+            SELECT 
+                rr.id,
+                rr.message,
+                rr.status,
+                rr.created_at,
+                r.id as resume_id,
+                r.title as resume_title,
+                r.salary as expected_salary,
+                a.id as applicant_id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.phone,
+                p.name as profession_name
+            FROM resume_responses rr
+            JOIN companies c ON rr.company_id = c.id
+            JOIN resumes r ON rr.resume_id = r.id
+            JOIN applicants a ON r.applicant_id = a.id
+            JOIN users u ON a.user_id = u.id
+            LEFT JOIN professions p ON r.profession_id = p.id
+            WHERE c.user_id = ?
+            ORDER BY rr.created_at DESC
+        `;
+        
+        const resumeResponses = await sequelize.query(query, {
+            replacements: [userId],
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        res.json({
+            success: true,
+            resume_responses: resumeResponses || []
+        });
+        
+    } catch (error) {
+        console.error('Ошибка получения отправленных приглашений:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Обновление пароля (уже есть в коде, но оставляем)
 
 
 // ==================== ЗАПУСК СЕРВЕРА ====================
