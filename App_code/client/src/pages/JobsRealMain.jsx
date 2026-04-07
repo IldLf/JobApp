@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/JobsRealMain.css';
 
 const JobsRealMain = ({user, onLogout}) => {
   console.log('JobsRealMain received user:', user);
+  const navigate = useNavigate(); 
   const [message, setMessage] = useState({ text: '', type: 'info', visible: false });
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -43,10 +45,17 @@ const JobsRealMain = ({user, onLogout}) => {
     showMessage(`Переход по ссылке "${text}" (демо-режим)`);
   };
 
-  const handleCreateResume = (e) => {
+const handleCreateResume = (e) => {
     e.preventDefault();
-    showMessage('Создание резюме (демо-режим)');
-  };
+    
+    if (user) {
+        // Пользователь авторизован → переход в личный кабинет на вкладку резюме
+        navigate('/account', { state: { tab: 'resumes', openForm: true } });
+    } else {
+        // Не авторизован → переход на страницу входа
+        navigate('/login');
+    }
+};
 
   const handleViewAllVacancies = (e) => {
     e.preventDefault();
@@ -279,17 +288,24 @@ const JobsRealMain = ({user, onLogout}) => {
             <div key={idx} className="footer-column">
               <h4 className="footer-title">{column.title}</h4>
               <ul className="footer-links">
-                {column.links.map(link => (
-                  <li key={link}>
-                    <a 
-                      href="#" 
-                      className="footer-link"
-                      onClick={(e) => handleFooterLinkClick(e, link)}
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
+              {column.links.map(link => (
+                <li key={link}>
+                  <a 
+                    href="#" 
+                    className="footer-link"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        if (link === 'Создать резюме') {
+                            handleCreateResume(e); // используем ту же логику
+                        } else {
+                            handleFooterLinkClick(e, link);
+                        }
+                    }}
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
               </ul>
             </div>
           ))}
