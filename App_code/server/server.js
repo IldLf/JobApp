@@ -268,6 +268,7 @@ app.get('/api/applicant/resumes/:userId', async (req, res) => {
                 r.salary,
                 r.experience,
                 r.created_at,
+                r.is_active,        
                 p.name as profession
             FROM resumes r
             JOIN applicants a ON r.applicant_id = a.id
@@ -933,6 +934,301 @@ app.post('/api/resume-responses', async (req, res) => {
     }
 });
 
+// ДЛЯ РЕЗЮМЕ
+//  Получить все профессии (для выпадающего списка в форме)
+app.get('/api/professions', async (req, res) => {
+    try {
+        const professions = await sequelize.query(
+            'SELECT id, name FROM professions ORDER BY name ASC',
+            { type: sequelize.QueryTypes.SELECT }
+        );
+        
+        res.json({
+            success: true,
+            professions: professions || []
+        });
+    } catch (error) {
+        console.error('Ошибка получения профессий:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Получить applicant по user_id (вспомогательный)
+app.get('/api/applicants/by-user/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        const applicant = await sequelize.query(
+            'SELECT id, user_id, city, about, created_at FROM applicants WHERE user_id = ? LIMIT 1',
+            {
+                replacements: [userId],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+        
+        if (!applicant || applicant.length === 0) {
+            return res.status(404).json({ success: false, error: 'Профиль соискателя не найден' });
+        }
+        
+        res.json({
+            success: true,
+            applicant: applicant[0]
+        });
+    } catch (error) {
+        console.error('Ошибка получения профиля соискателя:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Создать резюме
+app.post('/api/resumes', async (req, res) => {
+    try {
+        const { applicant_id, profession_id, title, salary, experience, about, is_active } = req.body;
+
+        // Валидация
+        if (!title) {
+            return res.status(400).json({ success: false, error: 'Укажите желаемую должность' });
+        }
+
+        const result = await sequelize.query(
+            `INSERT INTO resumes (applicant_id, profession_id, title, salary, experience, about, is_active, created_at, updated_at) 
+             VALUES (:applicant_id, :profession_id, :title, :salary, :experience, :about, :is_active, NOW(), NOW())`,
+            {
+                replacements: {
+                    applicant_id,
+                    profession_id: profession_id || null,
+                    title,
+                    salary: salary || null,
+                    experience: experience || '',
+                    about: about || '',
+                    is_active: is_active !== undefined ? is_active : 1
+                },
+                type: sequelize.QueryTypes.INSERT
+            }
+        );
+        
+        const newId = result[0];
+        
+        // Возвращаем созданное резюме с данными профессии
+        const newResume = await sequelize.query(
+            `SELECT r.*, p.name as profession_name 
+             FROM resumes r 
+             LEFT JOIN professions p ON r.profession_id = p.id 
+             WHERE r.id = :id`,
+            {
+                replacements: { id: newId },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.json({
+            success: true,
+            message: 'Резюме создано',
+            resume: newResume[0]
+        });
+    } catch (error) {
+        console.error('Ошибка создания резюме:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Обновить резюме
+app.put('/api/resumes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { profession_id, title, salary, experience, about, is_active } = req.body;
+
+        // Проверяем существование
+        const existing = await sequelize.query(
+            'SELECT id FROM resumes WHERE id = ? LIMIT 1',
+            {
+                replacements: [id],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+        
+        if (!existing || existing.length === 0) {
+            return res.status(404).json({ success: false, error: 'Резюме не найдено' });
+        }
+
+        await sequelize.query(
+            `UPDATE resumes SET 
+                profession_id = :profession_id,
+                title = :title,
+                salary = :salary,
+                experience = :experience,
+                about = :about,
+                is_active = :is_active,
+                updated_at = NOW()
+             WHERE id = :id`,
+            {
+                replacements: {
+                    id,
+                    profession_id: profession_id || null,
+                    title,
+                    salary: salary || null,
+                    experience: experience || '',
+                    about: about || '',
+                    is_active: is_active !== undefined ? is_active : 1
+                },
+                type: sequelize.QueryTypes.UPDATE
+            }
+        );
+
+        // Возвращаем обновлённое резюме
+        const updatedResume = await sequelize.query(
+            `SELECT r.*, p.name as profession_name 
+             FROM resumes r 
+             LEFT JOIN professions p ON r.profession_id = p.id 
+             WHERE r.id = :id`,
+            {
+                replacements: { id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.json({
+            success: true,
+            message: 'Резюме обновлено',
+            updatedResume: updatedResume[0]
+        });
+    } catch (error) {
+        console.error('Ошибка обновления резюме:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==================== ДОПОЛНИТЕЛЬНЫЕ ЭНДПОИНТЫ ДЛЯ РЕЗЮМЕ ====================
+
+// Переключение статуса активности резюме
+app.put('/api/resumes/:id/toggle-active', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { is_active } = req.body; // ожидаем 0 или 1
+
+        // Проверяем существование
+        const existing = await sequelize.query(
+            'SELECT id, is_active FROM resumes WHERE id = ? LIMIT 1',
+            { replacements: [id], type: sequelize.QueryTypes.SELECT }
+        );
+        
+        if (!existing || existing.length === 0) {
+            return res.status(404).json({ success: false, error: 'Резюме не найдено' });
+        }
+
+        // Переключаем статус
+        const newStatus = is_active !== undefined ? (is_active ? 1 : 0) : (existing[0].is_active ? 0 : 1);
+        
+        await sequelize.query(
+            'UPDATE resumes SET is_active = ?, updated_at = NOW() WHERE id = ?',
+            { replacements: [newStatus, id], type: sequelize.QueryTypes.UPDATE }
+        );
+
+        // Возвращаем обновлённое резюме
+        const updated = await sequelize.query(
+            `SELECT r.*, p.name as profession_name 
+             FROM resumes r 
+             LEFT JOIN professions p ON r.profession_id = p.id 
+             WHERE r.id = ?`,
+            { replacements: [id], type: sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            message: newStatus ? 'Резюме активировано' : 'Резюме деактивировано',
+            resume: updated[0]
+        });
+    } catch (error) {
+        console.error('Ошибка переключения статуса резюме:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Повышение резюме в списке (устанавливаем boosted_at = NOW())
+app.put('/api/resumes/:id/boost', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Проверяем существование
+        const existing = await sequelize.query(
+            'SELECT id FROM resumes WHERE id = ? LIMIT 1',
+            { replacements: [id], type: sequelize.QueryTypes.SELECT }
+        );
+        
+        if (!existing || existing.length === 0) {
+            return res.status(404).json({ success: false, error: 'Резюме не найдено' });
+        }
+
+        // Обновляем время повышения
+        await sequelize.query(
+            'UPDATE resumes SET boosted_at = NOW(), updated_at = NOW() WHERE id = ?',
+            { replacements: [id], type: sequelize.QueryTypes.UPDATE }
+        );
+
+        // Возвращаем обновлённое резюме
+        const updated = await sequelize.query(
+            `SELECT r.*, p.name as profession_name 
+             FROM resumes r 
+             LEFT JOIN professions p ON r.profession_id = p.id 
+             WHERE r.id = ?`,
+            { replacements: [id], type: sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            message: 'Резюме поднято в списке',
+            resume: updated[0]
+        });
+    } catch (error) {
+        console.error('Ошибка повышения резюме:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Обновить статус резюме (активно/неактивно)
+app.patch('/api/resumes/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { is_active } = req.body;
+
+        // Проверяем существование
+        const existing = await sequelize.query(
+            'SELECT id FROM resumes WHERE id = ? LIMIT 1',
+            { replacements: [id], type: sequelize.QueryTypes.SELECT }
+        );
+        
+        if (!existing || existing.length === 0) {
+            return res.status(404).json({ success: false, error: 'Резюме не найдено' });
+        }
+
+        // Обновляем только статус
+        await sequelize.query(
+            'UPDATE resumes SET is_active = :is_active, updated_at = NOW() WHERE id = :id',
+            {
+                replacements: { id, is_active: is_active ? 1 : 0 },
+                type: sequelize.QueryTypes.UPDATE
+            }
+        );
+
+        // Возвращаем обновлённое резюме
+        const updatedResume = await sequelize.query(
+            `SELECT r.*, p.name as profession_name 
+             FROM resumes r 
+             LEFT JOIN professions p ON r.profession_id = p.id 
+             WHERE r.id = :id`,
+            { replacements: { id }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            message: `Резюме ${is_active ? 'активировано' : 'деактивировано'}`,
+            resume: updatedResume[0]
+        });
+    } catch (error) {
+        console.error('Ошибка обновления статуса резюме:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 
 // ==================== ЭНДПОИНТЫ ДЛЯ РАБОТОДАТЕЛЯ ====================

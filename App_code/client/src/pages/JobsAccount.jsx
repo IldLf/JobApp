@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import { useNavigate } from 'react-router-dom';
 import '../styles/JobsAccount.css';
 import profileService from '../services/profileService';
+import ResumeForm from './ResumeForm';
 
 // КОНСТАНТЫ ДАННЫХ
 
@@ -80,7 +81,6 @@ const formatSalary = (salaryFrom, salaryTo) => {
     return 'з/п не указана';
 };
 
-
 // главная функция
 const JobsAccount = ({user, onLogout}) => {
     const navigate = useNavigate();
@@ -123,6 +123,10 @@ const JobsAccount = ({user, onLogout}) => {
     const [employerResponses, setEmployerResponses] = useState([]);
     const [employerResumeResponses, setEmployerResumeResponses] = useState([]);
 
+
+    const [isResumeFormOpen, setIsResumeFormOpen] = useState(false);
+    const [resumeToEdit, setResumeToEdit] = useState(null);
+    const [professions, setProfessions] = useState([]);
 
     useEffect(() => { 
         loadUserData(); 
@@ -241,6 +245,21 @@ const JobsAccount = ({user, onLogout}) => {
                     setEmployerResumeResponses(resumeResponsesResult.resume_responses || []);
                 }
             }
+
+            // Загрузка списка профессий (для формы резюме)
+            try {
+                const professionsResponse = await fetch('http://localhost:5000/api/professions');
+                const professionsData = await professionsResponse.json();
+                
+                if (professionsData.success) {
+                    setProfessions(professionsData.professions);
+                    console.log('Профессии загружены:', professionsData.professions);
+                }
+            } catch (profError) {
+                console.error('Ошибка загрузки профессий:', profError);
+                // Не прерываем выполнение, профессии не критичны
+            }        
+            
         } catch (error) {
             console.error('!!!Ошибка загрузки данных:', error);
             setUserResponsesData([]);
@@ -415,6 +434,79 @@ const JobsAccount = ({user, onLogout}) => {
         }
     }
 
+    // Открытие формы создания резюме
+    const handleCreateResume = () => {
+    setResumeToEdit(null);
+    setIsResumeFormOpen(true);
+    };
+
+    // Открытие то же формы но для редактирования резюме
+    const handleEditResume = (resume) => {
+    setResumeToEdit(resume);
+    setIsResumeFormOpen(true);
+    };
+
+    // После сохранения резюме
+    const handleResumeSaved = (savedResume) => {
+    // Обновляем список резюме
+    if (resumeToEdit) {
+        // Редактирование - обновляем существующее
+        setUserResumeData(prev => 
+        prev.map(r => r.id === savedResume.id ? savedResume : r)
+        );
+    } else {
+        // Создание - добавляем новое
+        setUserResumeData(prev => [...prev, savedResume]);
+    }
+    showMessage(resumeToEdit ? 'Резюме обновлено' : 'Резюме создано');
+    };
+
+    // Переключение статуса резюме (активно/неактивно)
+    const handleToggleResumeStatus = async (resume) => {
+        const newStatus = !resume.is_active; // инвертируем текущий статус
+        
+        try {
+            const result = await profileService.toggleResumeStatus(resume.id, newStatus);
+            
+            if (result.success) {
+                // Обновляем локальный стейт
+                setUserResumeData(prev => 
+                    prev.map(r => 
+                        r.id === resume.id 
+                            ? { ...r, is_active: newStatus } 
+                            : r
+                    )
+                );
+                showMessage(newStatus ? 'Резюме активировано' : 'Резюме деактивировано');
+            } else {
+                alert(`Ошибка: ${result.error}`);
+            }
+        } catch (error) {
+            console.error('Error toggling resume status:', error);
+            alert('Ошибка соединения с сервером');
+        }
+    };
+
+    // "Повысить" резюме — только визуальный порядок (без БД)
+    const handleBoostResume = (resumeId) => {
+        setUserResumeData(prev => {
+            // Находим индекс резюме
+            const index = prev.findIndex(r => r.id === resumeId);
+            if (index <= 0) return prev; // уже наверху
+            
+            // Копируем массив
+            const newArray = [...prev];
+            // Вырезаем элемент
+            const [boosted] = newArray.splice(index, 1);
+            // Вставляем в начало
+            newArray.unshift(boosted);
+            
+            return newArray;
+        });
+        
+        showMessage('Резюме поднято в списке');
+    };
+
     const getTabs = () => {
         const currentUser = localStorage.getItem('user');
         if (!currentUser) return TABS;
@@ -508,7 +600,7 @@ const JobsAccount = ({user, onLogout}) => {
                             <h2 className="card-title">Мои резюме</h2>
                             <button 
                                 className="btn" 
-                                onClick={() => showMessage('Функция создания резюме (демо-режим)')}
+                                onClick={handleCreateResume}
                             >
                                 + Создать резюме
                             </button>
@@ -518,16 +610,16 @@ const JobsAccount = ({user, onLogout}) => {
                             {userResumeData.length === 0 ? (
                                 <div className="empty-state">
                                     <p className='empty-state-p'>У вас пока нет резюме :\</p>
-                                    <button className="btn" onClick={() => showMessage('Создать резюме')}>
-                                        Создать первое резюме
-                                    </button>
                                 </div>
                             ) : (
                                 userResumeData.map(resume => (
-                                    <div key={resume.id} className="item-card">
+                                    <div key={resume.id} className={`item-card ${!resume.is_active ? 'inactive' : ''}`}>
                                         <div className="item-header">
                                             <span className="item-title">{resume.title}</span>
-                                            <span className="item-status status-active">Активно</span>
+                                            {/* Статус с динамическим классом */}
+                                            <span className={`item-status ${resume.is_active ? 'status-active' : 'status-inactive'}`}>
+                                                {resume.is_active ? 'Активно' : 'Не активно'}
+                                            </span>
                                         </div>
                                         <div className="item-meta">
                                             {userApplicantData?.city || 'Город не указан'} • {resume.salary?.toLocaleString() || 'з/п не указана'} ₽
@@ -536,14 +628,21 @@ const JobsAccount = ({user, onLogout}) => {
                                             {resume.experience || 'Опыт не указан'}
                                         </div>
                                         <div className="item-actions">
-                                            <button className="item-action-btn" onClick={() => handleAction('Редактировать')}>
+                                            <button className="item-action-btn" onClick={() => handleEditResume(resume)}>
                                                 Редактировать
                                             </button>
-                                            <button className="item-action-btn" onClick={() => handleAction('Повысить')}>
-                                                Повысить
+                                            <button 
+                                                className="item-action-btn" 
+                                                onClick={() => handleBoostResume(resume.id)}
+                                            >
+                                                ⬆️ Повысить
                                             </button>
-                                            <button className="item-action-btn" onClick={() => handleAction('Деактивировать')}>
-                                                Деактивировать
+                                            
+                                            <button 
+                                                className={`item-action-btn ${!resume.is_active ? 'btn-warning' : ''}`}
+                                                onClick={() => handleToggleResumeStatus(resume)}
+                                            >
+                                                {resume.is_active ? ' Деактивировать' : ' Активировать'}
                                             </button>
                                         </div>
                                     </div>
@@ -1081,6 +1180,15 @@ const JobsAccount = ({user, onLogout}) => {
                     {message.text}
                 </div>
             )}
+
+            <ResumeForm
+                isOpen={isResumeFormOpen}
+                onClose={() => setIsResumeFormOpen(false)}
+                onResumeSaved={handleResumeSaved}
+                resumeToEdit={resumeToEdit}
+                professions={professions}
+            />
+
         </div>
     );
 };

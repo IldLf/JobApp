@@ -60,6 +60,26 @@ class ProfileService {
         }
     }
 
+    // Получить список профессий
+    async getProfessions() {
+        try {
+            const response = await fetch(`${API_URL}/professions`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка получения профессий:', error);
+            return { success: false, error: error.message, professions: [] };
+        }
+    }
+
+    // Получить applicant по user_id
+    async getApplicantByUserId(userId) {
+        try {
+            const response = await fetch(`${API_URL}/applicants/by-user/${userId}`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка получения профиля соискателя:', error);
     async updatePassword(userId, passwordData) {
         try {
             const response = await fetch(`${API_URL}/user/password/${userId}`, {
@@ -89,6 +109,13 @@ class ProfileService {
         }
     }
 
+    // Создать резюме
+    async createResume(resumeData) {
+        try {
+            const response = await fetch(`${API_URL}/resumes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(resumeData)
     async updateEmployerProfile(userId, profileData) {
         try {
             const response = await fetch(`${API_URL}/employer/profile/${userId}`, {
@@ -101,7 +128,40 @@ class ProfileService {
             const data = await response.json();
             return data;
         } catch (error) {
+            console.error('Ошибка создания резюме:', error);
             console.error('Ошибка обновления профиля работодателя:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Обновить резюме
+    async updateResume(resumeId, resumeData) {
+        try {
+            const response = await fetch(`${API_URL}/resumes/${resumeId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(resumeData)
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления резюме:', error);
+            return { success: false, error: error.message };
+        }
+    }    
+
+    // Обновить статус резюме (активно/неактивно)
+    async toggleResumeStatus(resumeId, isActive) {
+        try {
+            const response = await fetch(`${API_URL}/resumes/${resumeId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: isActive })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления статуса резюме:', error);
             return { success: false, error: error.message };
         }
     }
