@@ -1,7 +1,6 @@
 const API_URL = 'http://localhost:5000/api';
 
 class ProfileService {
-    // Получить полный профиль соискателя
     async getApplicantData(userId) {
         try {
             const response = await fetch(`${API_URL}/applicant/profile/${userId}`);
@@ -44,14 +43,19 @@ class ProfileService {
         }
     }
 
-    async getDashboardStats(userId) {
+    async updateApplicantProfile(userId, profileData) {
         try {
-            const response = await fetch(`${API_URL}/dashboard/stats/${userId}`);
+            const response = await fetch(`${API_URL}/applicant/profile/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData)
+            });
             const data = await response.json();
-            console.log(data);
             return data;
         } catch (error) {
-            console.error('Ошибка получения статистики:', error);
+            console.error('Ошибка обновления профиля:', error);
             return { success: false, error: error.message };
         }
     }
@@ -76,6 +80,31 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения профиля соискателя:', error);
+    async updatePassword(userId, passwordData) {
+        try {
+            const response = await fetch(`${API_URL}/user/password/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(passwordData)
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления пароля:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+
+    async getEmployerData(userId) {
+        try {
+            const response = await fetch(`${API_URL}/employer/profile/${userId}`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка получения профиля работодателя:', error);
             return { success: false, error: error.message };
         }
     }
@@ -87,11 +116,20 @@ class ProfileService {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(resumeData)
+    async updateEmployerProfile(userId, profileData) {
+        try {
+            const response = await fetch(`${API_URL}/employer/profile/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData)
             });
             const data = await response.json();
             return data;
         } catch (error) {
             console.error('Ошибка создания резюме:', error);
+            console.error('Ошибка обновления профиля работодателя:', error);
             return { success: false, error: error.message };
         }
     }
@@ -128,6 +166,38 @@ class ProfileService {
         }
     }
 
+    async getEmployerVacancies(userId) {
+        try {
+            const response = await fetch(`${API_URL}/employer/vacancies/${userId}`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка получения вакансий:', error);
+            return { success: false, error: error.message, vacancies: [] };
+        }
+    }
+
+    async getEmployerResponses(userId) {
+        try {
+            const response = await fetch(`${API_URL}/employer/responses/${userId}`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка получения откликов:', error);
+            return { success: false, error: error.message, responses: [] };
+        }
+    }
+
+    async getEmployerResumeResponses(userId) {
+        try {
+            const response = await fetch(`${API_URL}/employer/resume-responses/${userId}`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка получения приглашений:', error);
+            return { success: false, error: error.message, resume_responses: [] };
+        }
+    }
 }
 
 export default new ProfileService();
