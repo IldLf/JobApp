@@ -121,6 +121,38 @@ class CatalogService {
             return { success: false, error: 'Ошибка подключения к серверу' };
         }
     }
+
+    async getUserResumes(userId) {
+        try {
+            const response = await fetch(`${API_URL}/user/resumes/${userId}`);
+            const data = await response.json();
+            return data.success ? data.resumes : [];
+        } catch (error) {
+            console.error('Ошибка получения резюме пользователя:', error);
+            return [];
+        }
+    }
+
+    async respondToVacancyWithResume(vacancyId, userId, resumeId, coverLetter) {
+        try {
+            const response = await fetch(`${API_URL}/vacancy-responses`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    vacancy_id: vacancyId,
+                    user_id: userId,
+                    resume_id: resumeId,
+                    cover_letter: coverLetter
+                })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Ошибка отклика на вакансию:', error);
+            return { success: false, error: 'Ошибка подключения к серверу' };
+        }
+    }
 }
 
 export default new CatalogService();

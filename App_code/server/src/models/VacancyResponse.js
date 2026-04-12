@@ -23,6 +23,14 @@ module.exports = (sequelize) => {
                 key: 'id'
             }
         },
+        resume_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'resumes',
+                key: 'id'
+            }
+        },
         cover_letter: {
             type: DataTypes.TEXT,
             allowNull: true

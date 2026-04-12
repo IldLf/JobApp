@@ -92,6 +92,52 @@
     cursor: not-allowed;
 }
 
+.response-modal-resume-select {
+    margin-bottom: 15px;
+}
+
+.response-modal-resume-select label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.resume-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+}
+
+.resume-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.response-modal-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #856404;
+}
+
+.response-modal-warning a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.response-modal-warning a:hover {
+    text-decoration: underline;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

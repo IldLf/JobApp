@@ -47,10 +47,6 @@ module.exports = (sequelize) => {
         education: {
             type: DataTypes.STRING(255),
             allowNull: true
-        },
-        is_active: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: true
         }
     }, {
         tableName: 'applicants',

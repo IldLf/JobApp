@@ -12,6 +12,8 @@ const JobsCatalog = ({ user, onLogout }) => {
     const [professions, setProfessions] = useState([]);
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    const [userResumes, setUserResumes] = useState([]);
+    const [selectedResumeId, setSelectedResumeId] = useState('');
 
     // Пагинация
     const [vacancyPagination, setVacancyPagination] = useState({
@@ -62,6 +64,19 @@ const JobsCatalog = ({ user, onLogout }) => {
         setMessage({ text, type, visible: true });
         setTimeout(() => setMessage(prev => ({ ...prev, visible: false })), 3000);
     };
+
+    useEffect(() => {
+        const loadUserResumes = async () => {
+            if (user && user.user_type === 'applicant') {
+                const resumes = await catalogService.getUserResumes(user.id);
+                setUserResumes(resumes);
+                if (resumes.length > 0) {
+                    setSelectedResumeId(resumes[0].id);
+                }
+            }
+        };
+        loadUserResumes();
+    }, [user]);
 
     // Загрузка данных для фильтров
     useEffect(() => {
@@ -212,6 +227,9 @@ const JobsCatalog = ({ user, onLogout }) => {
             targetTitle,
             coverLetter: ''
         });
+        if (userResumes.length > 0) {
+            setSelectedResumeId(userResumes[0].id);
+        }
     };
 
     // Закрытие модального окна
@@ -232,13 +250,19 @@ const JobsCatalog = ({ user, onLogout }) => {
             return;
         }
 
+        if (responseModal.type === 'vacancy' && !selectedResumeId) {
+            showMessage('Пожалуйста, выберите резюме для отклика', 'error');
+            return;
+        }
+
         setSending(true);
 
         let result;
         if (responseModal.type === 'vacancy') {
-            result = await catalogService.respondToVacancy(
+            result = await catalogService.respondToVacancyWithResume(
                 responseModal.targetId,
                 user?.id,
+                selectedResumeId,
                 responseModal.coverLetter
             );
         } else {
@@ -470,7 +494,7 @@ const JobsCatalog = ({ user, onLogout }) => {
                                                             <span className="vacancy-tag experience">{vac.experience_required}</span>
                                                         )}
                                                         {vac.employment_type && (
-                                                            <span className="vacancy-tag type">{vac.employment_type}</span>
+                                                            <span className="vacancy-tag type">{vac.employment_type_display}</span>
                                                         )}
                                                         {vac.Profession && (
                                                             <span className="vacancy-tag">{vac.Profession.name}</span>
@@ -588,6 +612,32 @@ const JobsCatalog = ({ user, onLogout }) => {
                     <div className="response-modal" onClick={(e) => e.stopPropagation()}>
                         <h3>Отклик на {responseModal.type === 'vacancy' ? 'вакансию' : 'резюме'}</h3>
                         <p className="response-modal-target">{responseModal.targetTitle}</p>
+
+                        {/* Выбор резюме - только для отклика на вакансию */}
+                        {responseModal.type === 'vacancy' && userResumes.length > 0 && (
+                            <div className="response-modal-resume-select">
+                                <label>Выберите резюме для отклика:</label>
+                                <select
+                                    value={selectedResumeId}
+                                    onChange={(e) => setSelectedResumeId(e.target.value)}
+                                    className="resume-select"
+                                >
+                                    {userResumes.map(resume => (
+                                        <option key={resume.id} value={resume.id}>
+                                            {resume.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {responseModal.type === 'vacancy' && userResumes.length === 0 && (
+                            <div className="response-modal-warning">
+                                ⚠️ У вас нет активных резюме.
+                                <a href="/account">Создайте резюме</a> перед откликом.
+                            </div>
+                        )}
+
                         <textarea
                             className="response-modal-textarea"
                             placeholder="Напишите сопроводительное письмо..."
@@ -606,7 +656,7 @@ const JobsCatalog = ({ user, onLogout }) => {
                             <button
                                 className="response-modal-btn response-modal-btn-submit"
                                 onClick={handleSendResponse}
-                                disabled={sending}
+                                disabled={sending || (responseModal.type === 'vacancy' && userResumes.length === 0)}
                             >
                                 {sending ? 'Отправка...' : 'Отправить'}
                             </button>

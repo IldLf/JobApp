@@ -35,6 +35,10 @@ module.exports = (sequelize) => {
             validate: {
                 isIn: [['applicant', 'employer']]
             }
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true
         }
     }, {
         tableName: 'users',

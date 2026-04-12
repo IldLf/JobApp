@@ -31,6 +31,11 @@ module.exports = (sequelize) => {
         logo_url: {
             type: DataTypes.STRING(255),
             allowNull: true
+        },
+        inn: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            unique: true
         }
     }, {
         tableName: 'companies',

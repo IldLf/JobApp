@@ -37,8 +37,6 @@ function App() {
                 <Route path="/login" element={<JobsLoginRegister onLoginSuccess={handleLoginSuccess} onRegisterSuccess={handleRegisterSuccess}/>} />
                 <Route path="/catalog" element={<JobsCatalog user={user} onLogout={handleLogout}/>} />
                 <Route path="/account" element={<JobsAccount user={user} onLogout={handleLogout}/>} />
-                {/* <Route path='/catalog' element={<JobsCatalog user={user} onLogout={handleLogout}/>} />
-                <Route path='/account' element={<JobsAccount user={user} onLogout={handleLogout}/>} /> */}
                 <Route path="/vacancy/:id" element={<VacDetails />} />
             </Routes>
         </Router>
