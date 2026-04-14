@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/JobsAccount.css';
 import profileService from '../services/profileService';
 import ResumeForm from './ResumeForm';
@@ -133,7 +133,7 @@ const formatPhoneForServer = (phone) => {
 // главная функция
 const JobsAccount = ({user, onLogout}) => {
     const navigate = useNavigate();
-
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('settings');
     const [message, setMessage] = useState({ text: '', type: 'info', visible: false });
     const [loading, setLoading] = useState(true);
@@ -215,6 +215,24 @@ const JobsAccount = ({user, onLogout}) => {
             });
         }
     }, [userData, userApplicantData, employerData]);
+
+    // Обработка переходов с параметрами из JobsRealMain
+    useEffect(() => {
+        // Проверяем, есть ли параметры в state
+        if (location.state?.tab && user) {
+            // Устанавливаем нужную вкладку
+            setActiveTab(location.state.tab);
+            
+            // Если нужно открыть форму создания резюме
+            if (location.state.openForm && location.state.tab === 'resumes') {
+                setResumeToEdit(null);
+                setIsResumeFormOpen(true);
+            }
+            
+            // Очищаем state, чтобы при обновлении страницы не срабатывало снова
+            navigate('/account', { replace: true, state: {} });
+        }
+    }, [location.state, user]);
 
     const loadUserData = async () => { // функция загрузки данных 
         const currentUser = localStorage.getItem('user');

@@ -41,25 +41,81 @@ const JobsRealMain = ({user, onLogout}) => {
   };
 
   const handleFooterLinkClick = (e, text) => {
-    e.preventDefault();
-    showMessage(`Переход по ссылке "${text}" (демо-режим)`);
+      e.preventDefault();
+      
+      // Карта ссылок
+      const linkMap = {
+          // Соискателям
+          'Поиск вакансий': '/catalog',
+          'Создать резюме': () => handleCreateResume(e),
+          'Советы по карьере': '/', 
+          'Категории': '/catalog',
+          
+          // Работодателям
+          'Разместить вакансию': () => {
+              if (!user) {
+                  // Не авторизован → переход на страницу входа
+                  navigate('/login');
+              } else if (user.user_type === 'applicant') {
+                  // Соискатель → показываем сообщение, что вакансии размещают только работодатели
+                  showMessage('❌ Вакансии могут размещать только работодатели!');
+              } else if (user.user_type === 'employer') {
+                  // Работодатель → переход в личный кабинет на вкладку вакансий
+                  navigate('/account', { state: { tab: 'vacancies' } });
+              }
+          },
+          'Поиск резюме': '/catalog',
+          'Тарифы': '/', // пока на главную
+          'Кабинет работодателя': () => {
+              if (user?.user_type === 'employer') {
+                  navigate('/account');
+              } else {
+                  navigate('/login');
+              }
+          },
+          
+          // Общие
+          'О проекте': '/',
+          'Контакты': '/',
+          'Партнерам': '/',
+          'Помощь': '/'
+      };
+      
+      // Выполняем переход
+      if (linkMap[text]) {
+          if (typeof linkMap[text] === 'function') {
+              linkMap[text]();
+          } else {
+              navigate(linkMap[text]);
+          }
+      } else {
+          showMessage(`Переход по ссылке "${text}" (демо-режим)`);
+      }
   };
 
-const handleCreateResume = (e) => {
-    e.preventDefault();
-    
-    if (user) {
-        // Пользователь авторизован → переход в личный кабинет на вкладку резюме
-        navigate('/account', { state: { tab: 'resumes', openForm: true } });
-    } else {
-        // Не авторизован → переход на страницу входа
-        navigate('/login');
-    }
-};
+  const handleCreateResume = (e) => {
+      e.preventDefault();
+      
+      if (!user) {
+          // Не авторизован → переход на страницу входа
+          navigate('/login');
+      } else if (user.user_type === 'employer') {
+          // Работодатель → показываем сообщение, что резюме создают только соискатели
+          showMessage('❌ Резюме могут создавать только соискатели!');
+      } else if (user.user_type === 'applicant') {
+          // Соискатель → переход в личный кабинет на вкладку резюме с открытой формой
+          navigate('/account', { 
+              state: { 
+                  tab: 'resumes', 
+                  openForm: true 
+              } 
+          });
+      }
+  };
 
   const handleViewAllVacancies = (e) => {
-    e.preventDefault();
-    showMessage('Переход к списку всех вакансий (демо-режим)');
+      e.preventDefault();
+      navigate('/catalog');
   };
 
   // Данные для преимуществ
@@ -295,11 +351,7 @@ const handleCreateResume = (e) => {
                     className="footer-link"
                     onClick={(e) => {
                         e.preventDefault();
-                        if (link === 'Создать резюме') {
-                            handleCreateResume(e); // используем ту же логику
-                        } else {
-                            handleFooterLinkClick(e, link);
-                        }
+                        handleFooterLinkClick(e, link);
                     }}
                   >
                     {link}
