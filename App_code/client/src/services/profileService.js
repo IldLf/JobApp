@@ -210,6 +210,54 @@ class ProfileService {
             return { success: false, error: error.message };
         }
     }
+
+    // Создать вакансию
+    async createVacancy(vacancyData) {
+    try {
+        const response = await fetch(`${API_URL}/vacancies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vacancyData)
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Ошибка создания вакансии:', error);
+        return { success: false, error: error.message };
+    }
+    }
+
+    // Обновить вакансию
+    async updateVacancy(vacancyId, vacancyData) {
+    try {
+        const response = await fetch(`${API_URL}/vacancies/${vacancyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vacancyData)
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Ошибка обновления вакансии:', error);
+        return { success: false, error: error.message };
+    }
+    }
+
+    // Обновить статус вакансии
+    async toggleVacancyStatus(vacancyId, isActive) {
+    try {
+        const response = await fetch(`${API_URL}/vacancies/${vacancyId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: isActive })
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Ошибка обновления статуса вакансии:', error);
+        return { success: false, error: error.message };
+    }
+    }
 }
 
 export default new ProfileService();

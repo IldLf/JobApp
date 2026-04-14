@@ -1437,6 +1437,240 @@ app.get('/api/employer/resume-responses/:userId', async (req, res) => {
     }
 });
 
+// ==================== ЭНДПОИНТЫ ДЛЯ ВАКАНСИЙ ====================
+
+// Создать вакансию
+app.post('/api/vacancies', async (req, res) => {
+  try {
+    const {
+      company_id,
+      profession_id,
+      title,
+      description,
+      salary_from,
+      salary_to,
+      city,
+      employment_type,
+      experience_required,
+      is_active
+    } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({
+        success: false,
+        error: 'Название и описание обязательны'
+      });
+    }
+
+    const result = await sequelize.query(
+      `INSERT INTO vacancies (
+        company_id, profession_id, title, description,
+        salary_from, salary_to, city, employment_type,
+        experience_required, is_active, created_at, updated_at
+      ) VALUES (
+        :company_id, :profession_id, :title, :description,
+        :salary_from, :salary_to, :city, :employment_type,
+        :experience_required, :is_active, NOW(), NOW()
+      )`,
+      {
+        replacements: {
+          company_id,
+          profession_id: profession_id || null,
+          title,
+          description,
+          salary_from: salary_from || null,
+          salary_to: salary_to || null,
+          city: city || null,
+          employment_type: employment_type || null,
+          experience_required: experience_required || null,
+          is_active: is_active !== undefined ? is_active : 1
+        },
+        type: sequelize.QueryTypes.INSERT
+      }
+    );
+
+    const newId = result[0];
+
+    // Получаем созданную вакансию с данными о компании и профессии
+    const newVacancy = await sequelize.query(
+      `SELECT v.*, 
+              c.name as company_name,
+              p.name as profession_name
+       FROM vacancies v
+       LEFT JOIN companies c ON v.company_id = c.id
+       LEFT JOIN professions p ON v.profession_id = p.id
+       WHERE v.id = :id`,
+      {
+        replacements: { id: newId },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Вакансия создана',
+      vacancy: newVacancy[0]
+    });
+  } catch (error) {
+    console.error('Ошибка создания вакансии:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Обновить вакансию
+app.put('/api/vacancies/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      profession_id,
+      title,
+      description,
+      salary_from,
+      salary_to,
+      city,
+      employment_type,
+      experience_required,
+      is_active
+    } = req.body;
+
+    // Проверяем существование
+    const existing = await sequelize.query(
+      'SELECT id FROM vacancies WHERE id = ? LIMIT 1',
+      {
+        replacements: [id],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Вакансия не найдена'
+      });
+    }
+
+    await sequelize.query(
+      `UPDATE vacancies SET
+        profession_id = :profession_id,
+        title = :title,
+        description = :description,
+        salary_from = :salary_from,
+        salary_to = :salary_to,
+        city = :city,
+        employment_type = :employment_type,
+        experience_required = :experience_required,
+        is_active = :is_active,
+        updated_at = NOW()
+      WHERE id = :id`,
+      {
+        replacements: {
+          id,
+          profession_id: profession_id || null,
+          title,
+          description,
+          salary_from: salary_from || null,
+          salary_to: salary_to || null,
+          city: city || null,
+          employment_type: employment_type || null,
+          experience_required: experience_required || null,
+          is_active: is_active !== undefined ? is_active : 1
+        },
+        type: sequelize.QueryTypes.UPDATE
+      }
+    );
+
+    // Получаем обновленную вакансию
+    const updatedVacancy = await sequelize.query(
+      `SELECT v.*, 
+              c.name as company_name,
+              p.name as profession_name
+       FROM vacancies v
+       LEFT JOIN companies c ON v.company_id = c.id
+       LEFT JOIN professions p ON v.profession_id = p.id
+       WHERE v.id = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Вакансия обновлена',
+      updatedVacancy: updatedVacancy[0]
+    });
+  } catch (error) {
+    console.error('Ошибка обновления вакансии:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Обновить статус вакансии (активно/неактивно)
+app.patch('/api/vacancies/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+
+    const existing = await sequelize.query(
+      'SELECT id FROM vacancies WHERE id = ? LIMIT 1',
+      {
+        replacements: [id],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Вакансия не найдена'
+      });
+    }
+
+    await sequelize.query(
+      'UPDATE vacancies SET is_active = :is_active, updated_at = NOW() WHERE id = :id',
+      {
+        replacements: {
+          id,
+          is_active: is_active ? 1 : 0
+        },
+        type: sequelize.QueryTypes.UPDATE
+      }
+    );
+
+    const updatedVacancy = await sequelize.query(
+      `SELECT v.*, 
+              c.name as company_name,
+              p.name as profession_name
+       FROM vacancies v
+       LEFT JOIN companies c ON v.company_id = c.id
+       LEFT JOIN professions p ON v.profession_id = p.id
+       WHERE v.id = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      message: `Вакансия ${is_active ? 'активирована' : 'деактивирована'}`,
+      vacancy: updatedVacancy[0]
+    });
+  } catch (error) {
+    console.error('Ошибка обновления статуса вакансии:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== ЗАПУСК СЕРВЕРА ====================
 
 async function startServer() {

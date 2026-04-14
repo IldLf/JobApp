@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/JobsAccount.css';
 import profileService from '../services/profileService';
 import ResumeForm from './ResumeForm';
+import VacancyForm from './VacancyForm';
 
 // КОНСТАНТЫ ДАННЫХ
 
@@ -145,6 +146,7 @@ const JobsAccount = ({user, onLogout}) => {
     const [userResponsesData, setUserResponsesData] = useState([]);
     const [resumeResponses, setResumeResponses] = useState([]);
 
+    
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -176,6 +178,9 @@ const JobsAccount = ({user, onLogout}) => {
     const [isResumeFormOpen, setIsResumeFormOpen] = useState(false);
     const [resumeToEdit, setResumeToEdit] = useState(null);
     const [professions, setProfessions] = useState([]);
+
+    const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
+    const [vacancyToEdit, setVacancyToEdit] = useState(null);
 
     useEffect(() => { 
         loadUserData(); 
@@ -228,7 +233,7 @@ const JobsAccount = ({user, onLogout}) => {
                 setResumeToEdit(null);
                 setIsResumeFormOpen(true);
             }
-            
+     
             // Очищаем state, чтобы при обновлении страницы не срабатывало снова
             navigate('/account', { replace: true, state: {} });
         }
@@ -593,6 +598,57 @@ const JobsAccount = ({user, onLogout}) => {
         showMessage('Резюме поднято в списке');
     };
 
+    // Открытие формы создания вакансии
+    const handleCreateVacancy = () => {
+    setVacancyToEdit(null);
+    setIsVacancyFormOpen(true);
+    };
+
+    // Открытие формы редактирования
+    const handleEditVacancy = (vacancy) => {
+    setVacancyToEdit(vacancy);
+    setIsVacancyFormOpen(true);
+    };
+
+    // После сохранения вакансии
+    const handleVacancySaved = (savedVacancy) => {
+    if (vacancyToEdit) {
+        // Редактирование
+        setEmployerVacancies(prev =>
+        prev.map(v => v.id === savedVacancy.id ? savedVacancy : v)
+        );
+    } else {
+        // Создание
+        setEmployerVacancies(prev => [...prev, savedVacancy]);
+    }
+    showMessage(vacancyToEdit ? 'Вакансия обновлена' : 'Вакансия создана');
+    };
+
+    // Переключение статуса вакансии
+    const handleToggleVacancyStatus = async (vacancy) => {
+    const newStatus = !vacancy.is_active;
+
+    try {
+        const result = await profileService.toggleVacancyStatus(vacancy.id, newStatus);
+
+        if (result.success) {
+        setEmployerVacancies(prev =>
+            prev.map(v =>
+            v.id === vacancy.id
+                ? { ...v, is_active: newStatus }
+                : v
+            )
+        );
+        showMessage(newStatus ? 'Вакансия активирована' : 'Вакансия деактивирована');
+        } else {
+        alert(`Ошибка: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error toggling vacancy status:', error);
+        alert('Ошибка соединения с сервером');
+    }
+    };
+    
     const getTabs = () => {
         const currentUser = localStorage.getItem('user');
         if (!currentUser) return TABS;
@@ -1107,7 +1163,7 @@ const JobsAccount = ({user, onLogout}) => {
                     <div className="card">
                         <div className="card-header">
                             <h2 className="card-title">Мои вакансии</h2>
-                            <button className="btn" onClick={() => showMessage('Создание вакансии (демо-режим)')}>
+                            <button className="btn" onClick={handleCreateVacancy}>
                                 + Создать вакансию
                             </button>
                         </div>
@@ -1115,7 +1171,7 @@ const JobsAccount = ({user, onLogout}) => {
                             {employerVacancies.length === 0 ? (
                                 <div className="empty-state">
                                     <p className="empty-state-p">У вас пока нет вакансий :\</p>
-                                    <button className="btn" onClick={() => showMessage('Создать вакансию')}>
+                                    <button className="btn" onClick={handleCreateVacancy}>
                                         Создать первую вакансию
                                     </button>
                                 </div>
@@ -1129,7 +1185,9 @@ const JobsAccount = ({user, onLogout}) => {
                                             </span>
                                         </div>
                                         <div className="item-meta">
-                                            {vacancy.city} • {vacancy.employment_type === 'full-time' ? 'Полная занятость' : vacancy.employment_type}
+                                            {vacancy.city} • {vacancy.employment_type === 'full-time' ? 'Полная занятость' : 
+                                            vacancy.employment_type === 'part-time' ? 'Частичная занятость' :
+                                            vacancy.employment_type === 'project' ? 'Проектная работа' : 'Стажировка'}
                                         </div>
                                         <div className="item-meta">
                                             {vacancy.salary_from && vacancy.salary_to 
@@ -1142,10 +1200,16 @@ const JobsAccount = ({user, onLogout}) => {
                                             {vacancy.description?.substring(0, 150)}...
                                         </div>
                                         <div className="item-actions">
-                                            <button className="item-action-btn" onClick={() => showMessage('Редактировать вакансию (демо)')}>
+                                            <button 
+                                                className="item-action-btn" 
+                                                onClick={() => handleEditVacancy(vacancy)}
+                                            >
                                                 Редактировать
                                             </button>
-                                            <button className="item-action-btn" onClick={() => showMessage('Деактивировать вакансию (демо)')}>
+                                            <button 
+                                                className="item-action-btn" 
+                                                onClick={() => handleToggleVacancyStatus(vacancy)}
+                                            >
                                                 {vacancy.is_active ? 'Деактивировать' : 'Активировать'}
                                             </button>
                                         </div>
@@ -1285,6 +1349,13 @@ const JobsAccount = ({user, onLogout}) => {
                 professions={professions}
             />
 
+            <VacancyForm
+                isOpen={isVacancyFormOpen}
+                onClose={() => setIsVacancyFormOpen(false)}
+                onVacancySaved={handleVacancySaved}
+                vacancyToEdit={vacancyToEdit}
+                professions={professions}
+            />
         </div>
     );
 };
