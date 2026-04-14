@@ -479,7 +479,7 @@ app.post('/api/auth/login', async (req, res) => {
 // регистрация
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { email, password, first_name, last_name, user_type } = req.body;
+        const { email, password, first_name, last_name, user_type, company } = req.body;
 
         const existingUser = await User.findOne({
             where: { email: email }
@@ -514,18 +514,25 @@ app.post('/api/auth/register', async (req, res) => {
                 type: 'applicant'
             };
         } else if (user_type === 'employer') {
+            // Проверка уникальности ИНН
+            if (company && company.inn) {
+                const existingInn = await Company.findOne({ where: { inn: company.inn } });
+                if (existingInn) {
+                    await User.destroy({ where: { id: newUser.id } });
+                    return res.status(400).json({ success: false, error: 'Компания с таким ИНН уже зарегистрирована' });
+                }
+            }
             // Для работодателя используем имя из регистрации как название компании
-            const companyName = first_name && last_name ? `${first_name} ${last_name}` : email.split('@')[0];
-            const newCompany = await Company.create({
+           const newCompany = await Company.create({
                 user_id: newUser.id,
-                name: companyName,
-                description: null,
-                city: null,
-                logo_url: null
+                name: company?.name || `${first_name} ${last_name}`,
+                description: company?.description || null,
+                city: company?.city || null,
+                inn: company?.inn || null
             });
             profileData = {
                 id: newCompany.id,
-                name: companyName,
+                name: newCompany.name,
                 type: 'employer'
             };
         }

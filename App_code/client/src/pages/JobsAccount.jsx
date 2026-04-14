@@ -81,6 +81,55 @@ const formatSalary = (salaryFrom, salaryTo) => {
     return 'з/п не указана';
 };
 
+const validatePhone = (phone) => {
+    if (!phone) return true; // Пустое поле допустимо
+    // Удаляем все нецифровые символы
+    const digits = phone.replace(/\D/g, '');
+    // Проверяем что имеет 10 или 11 цифр
+    if (digits.length === 10 || digits.length === 11) {
+        return true;
+    }
+    return false;
+};
+
+const formatPhoneForDisplay = (phone) => {
+    if (!phone) return '';
+    
+    let digits = phone.replace(/\D/g, '');
+
+    return `${digits}`;
+};
+
+const formatPhoneInput = (phone) => {
+    if (!phone) return null;
+    let digits = phone.replace(/\D/g, '');
+    
+    if (digits.length === 11 && digits[0] === '8') {
+        digits = '7' + digits.slice(1);
+    }
+    
+    if (digits.length === 10) {
+        digits = '7' + digits;
+    }
+    
+    return digits.length === 11 ? `+${digits}` : null;
+};
+
+const formatPhoneForServer = (phone) => {
+    if (!phone) return null;
+    let digits = phone.replace(/\D/g, '');
+    
+    if (digits.length === 11 && digits[0] === '8') {
+        digits = '7' + digits.slice(1);
+    }
+    
+    if (digits.length === 10) {
+        digits = '7' + digits;
+    }
+    
+    return digits.length === 11 ? `+${digits}` : null;
+};
+
 // главная функция
 const JobsAccount = ({user, onLogout}) => {
     const navigate = useNavigate();
@@ -161,7 +210,8 @@ const JobsAccount = ({user, onLogout}) => {
                 company_name: employerData.name || '',
                 company_description: employerData.description || '',
                 company_city: employerData.city || '',
-                logo_url: employerData.logo_url || ''
+                logo_url: employerData.logo_url || '',
+                inn: employerData.inn || ''
             });
         }
     }, [userData, userApplicantData, employerData]);
@@ -270,6 +320,23 @@ const JobsAccount = ({user, onLogout}) => {
     };
 
     const handleSaveProfile = async () => {
+        if (formData.phone && !validatePhone(formData.phone)) {
+            showMessage('Введите корректный номер телефона (10 или 11 цифр)', 'error');
+            return;
+        }
+        if (formData.first_name.length < 2) {
+            showMessage('Имя должно содержать хотя бы 2 символа', 'error');
+            return;
+        }
+        if (formData.expected_salary > 100000000) {
+            showMessage('Слишком высокое значение ожидаемой зарплаты', 'error');
+            return;
+        }
+        if (formData.experience_years > 70) {
+            showMessage('Слишком высокое значение опыта работы', 'error');
+            return;
+        }
+
         setSaving(true);
         try {
             const currentUser = JSON.parse(localStorage.getItem('user'));
@@ -339,11 +406,12 @@ const JobsAccount = ({user, onLogout}) => {
                     first_name: userData.first_name || '',
                     last_name: userData.last_name || '',
                     email: userData.email || '',
-                    phone: userData.phone || '',
+                    phone: formatPhoneForServer(userData.phone) || '',
                     company_name: employerData.name || '',
                     company_description: employerData.description || '',
                     company_city: employerData.city || '',
-                    logo_url: employerData.logo_url || ''
+                    logo_url: employerData.logo_url || '',
+                    inn: employerData.inn || ''
                 });
             }
         }
@@ -799,9 +867,9 @@ const JobsAccount = ({user, onLogout}) => {
                                     <label>Телефон</label>
                                     <input 
                                         type="tel" 
-                                        value={formData.phone}
+                                        value={formatPhoneForDisplay(formData.phone)}
                                         onChange={(e) => handleFormChange('phone', e.target.value)}
-                                        placeholder="Введите телефон" 
+                                        placeholder="89001234567" 
                                     />
                                 </div>
 
@@ -912,6 +980,16 @@ const JobsAccount = ({user, onLogout}) => {
                                                 <option key={city.value} value={city.value}>{city.label}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>ИНН</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.inn || ''} 
+                                            disabled 
+                                            style={{ backgroundColor: '#f5f5f5' }}
+                                        />
+                                        <small style={{ color: '#999', fontSize: '12px' }}>ИНН нельзя изменить</small>
                                     </div>
                                     <div className="form-group full-width">
                                         <label>Описание компании</label>
