@@ -1,11 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { Op } = require('sequelize');
+const {Op} = require('sequelize');
 
 dotenv.config();
 
-const { sequelize, testConnection } = require('./src/config/database');
+const {sequelize, testConnection} = require('./src/config/database');
 const User = require('./src/models/User')(sequelize);
 const Profession = require('./src/models/Profession')(sequelize);
 const Company = require('./src/models/Company')(sequelize);
@@ -24,45 +24,45 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({extended: true}));
 
 // ==================== НАСТРОЙКА СВЯЗЕЙ ====================
 
 // User -> Applicant (один к одному)
-User.hasOne(Applicant, { foreignKey: 'user_id' });
-Applicant.belongsTo(User, { foreignKey: 'user_id' });
+User.hasOne(Applicant, {foreignKey: 'user_id'});
+Applicant.belongsTo(User, {foreignKey: 'user_id'});
 
 // User -> Company (один к одному)
-User.hasOne(Company, { foreignKey: 'user_id' });
-Company.belongsTo(User, { foreignKey: 'user_id' });
+User.hasOne(Company, {foreignKey: 'user_id'});
+Company.belongsTo(User, {foreignKey: 'user_id'});
 
 // Applicant -> Resume (один ко многим)
-Applicant.hasMany(Resume, { foreignKey: 'applicant_id' });
-Resume.belongsTo(Applicant, { foreignKey: 'applicant_id' });
+Applicant.hasMany(Resume, {foreignKey: 'applicant_id'});
+Resume.belongsTo(Applicant, {foreignKey: 'applicant_id'});
 
 // Company -> Vacancy (один ко многим)
-Company.hasMany(Vacancy, { foreignKey: 'company_id' });
-Vacancy.belongsTo(Company, { foreignKey: 'company_id' });
+Company.hasMany(Vacancy, {foreignKey: 'company_id'});
+Vacancy.belongsTo(Company, {foreignKey: 'company_id'});
 
 // Profession связи
-Vacancy.belongsTo(Profession, { foreignKey: 'profession_id' });
-Resume.belongsTo(Profession, { foreignKey: 'profession_id' });
+Vacancy.belongsTo(Profession, {foreignKey: 'profession_id'});
+Resume.belongsTo(Profession, {foreignKey: 'profession_id'});
 
 // VacancyResponse связи
-Vacancy.hasMany(VacancyResponse, { foreignKey: 'vacancy_id' });
-VacancyResponse.belongsTo(Vacancy, { foreignKey: 'vacancy_id' });
-Applicant.hasMany(VacancyResponse, { foreignKey: 'applicant_id' });
-VacancyResponse.belongsTo(Applicant, { foreignKey: 'applicant_id' });
+Vacancy.hasMany(VacancyResponse, {foreignKey: 'vacancy_id'});
+VacancyResponse.belongsTo(Vacancy, {foreignKey: 'vacancy_id'});
+Applicant.hasMany(VacancyResponse, {foreignKey: 'applicant_id'});
+VacancyResponse.belongsTo(Applicant, {foreignKey: 'applicant_id'});
 
 // ResumeResponse связи
-Resume.hasMany(ResumeResponse, { foreignKey: 'resume_id' });
-ResumeResponse.belongsTo(Resume, { foreignKey: 'resume_id' });
-Company.hasMany(ResumeResponse, { foreignKey: 'company_id' });
-ResumeResponse.belongsTo(Company, { foreignKey: 'company_id' });
+Resume.hasMany(ResumeResponse, {foreignKey: 'resume_id'});
+ResumeResponse.belongsTo(Resume, {foreignKey: 'resume_id'});
+Company.hasMany(ResumeResponse, {foreignKey: 'company_id'});
+ResumeResponse.belongsTo(Company, {foreignKey: 'company_id'});
 
 // Resume -> VacancyResponse (один ко многим)
-Resume.hasMany(VacancyResponse, { foreignKey: 'resume_id' });
-VacancyResponse.belongsTo(Resume, { foreignKey: 'resume_id' });
+Resume.hasMany(VacancyResponse, {foreignKey: 'resume_id'});
+VacancyResponse.belongsTo(Resume, {foreignKey: 'resume_id'});
 
 // ==================== ЭНДПОИНТЫ ====================
 
@@ -78,13 +78,13 @@ app.get('/api/user/resumes/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                r.id,
-                r.title,
-                r.is_active
+            SELECT r.id,
+                   r.title,
+                   r.is_active
             FROM resumes r
-            JOIN applicants a ON r.applicant_id = a.id
-            WHERE a.user_id = ? AND r.is_active = 1
+                     JOIN applicants a ON r.applicant_id = a.id
+            WHERE a.user_id = ?
+              AND r.is_active = 1
             ORDER BY r.created_at DESC
         `;
 
@@ -112,25 +112,26 @@ app.get('/api/applicant/profile/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                u.id,
-                u.email,
-                u.first_name,
-                u.last_name,
-                u.phone,
-                u.created_at,
-                a.id as applicant_id,                
-                a.city,
-                a.experience_years,
-                a.about,
-                a.expected_salary,
-                a.education,
-                a.birth_date,
-                p.name as profession
+            SELECT u.id,
+                   u.email,
+                   u.first_name,
+                   u.last_name,
+                   u.phone,
+                   u.created_at,
+                   a.id   as applicant_id,
+                   a.city,
+                   a.experience_years,
+                   a.about,
+                   a.expected_salary,
+                   a.education,
+                   a.birth_date,
+                   p.name as profession
             FROM users u
-            LEFT JOIN applicants a ON u.id = a.user_id
-            LEFT JOIN professions p ON p.id = a.profession_id
-            WHERE u.id = ? AND u.user_type = 'applicant' AND u.is_active = 1
+                     LEFT JOIN applicants a ON u.id = a.user_id
+                     LEFT JOIN professions p ON p.id = a.profession_id
+            WHERE u.id = ?
+              AND u.user_type = 'applicant'
+              AND u.is_active = 1
         `;
 
         const [results] = await sequelize.query(query, {
@@ -198,11 +199,11 @@ app.put('/api/applicant/profile/:userId', async (req, res) => {
         } = req.body;
 
         await User.update(
-            { first_name, last_name, phone },
-            { where: { id: userId } }
+            {first_name, last_name, phone},
+            {where: {id: userId}}
         );
 
-        const applicant = await Applicant.findOne({ where: { user_id: userId } });
+        const applicant = await Applicant.findOne({where: {user_id: userId}});
 
         if (!applicant) {
             return res.status(404).json({
@@ -214,7 +215,7 @@ app.put('/api/applicant/profile/:userId', async (req, res) => {
         let professionId = null;
         if (profession) {
             const professionRecord = await Profession.findOne({
-                where: { name: profession }
+                where: {name: profession}
             });
             if (professionRecord) {
                 professionId = professionRecord.id;
@@ -231,7 +232,7 @@ app.put('/api/applicant/profile/:userId', async (req, res) => {
                 education,
                 birth_date
             },
-            { where: { user_id: userId } }
+            {where: {user_id: userId}}
         );
 
         res.json({
@@ -252,7 +253,7 @@ app.put('/api/applicant/profile/:userId', async (req, res) => {
 app.put('/api/user/password/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
-        const { current_password, new_password } = req.body;
+        const {current_password, new_password} = req.body;
 
         // Находим пользователя
         const user = await User.findByPk(userId);
@@ -274,8 +275,8 @@ app.put('/api/user/password/:userId', async (req, res) => {
 
         // Обновляем пароль
         await User.update(
-            { password_hash: new_password },
-            { where: { id: userId } }
+            {password_hash: new_password},
+            {where: {id: userId}}
         );
 
         res.json({
@@ -298,17 +299,16 @@ app.get('/api/applicant/resumes/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                r.id,
-                r.title,
-                r.salary,
-                r.experience,
-                r.created_at,
-                r.is_active,        
-                p.name as profession
+            SELECT r.id,
+                   r.title,
+                   r.salary,
+                   r.experience,
+                   r.created_at,
+                   r.is_active,
+                   p.name as profession
             FROM resumes r
-            JOIN applicants a ON r.applicant_id = a.id
-            LEFT JOIN professions p ON r.profession_id = p.id
+                     JOIN applicants a ON r.applicant_id = a.id
+                     LEFT JOIN professions p ON r.profession_id = p.id
             WHERE a.user_id = ?
             ORDER BY r.created_at DESC
         `;
@@ -338,27 +338,26 @@ app.get('/api/applicant/responses/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                vr.id as response_id,
-                vr.status,
-                vr.created_at as response_date,
-                vr.cover_letter,
-                v.id as vacancy_id,
-                v.title as vacancy_title,
-                v.salary_from,
-                v.salary_to,
-                v.city as vacancy_city,
-                c.id as company_id,
-                c.name as company_name,
-                c.city as company_city,
-                p.name as profession_name
+            SELECT vr.id         as response_id,
+                   vr.status,
+                   vr.created_at as response_date,
+                   vr.cover_letter,
+                   v.id          as vacancy_id,
+                   v.title       as vacancy_title,
+                   v.salary_from,
+                   v.salary_to,
+                   v.city        as vacancy_city,
+                   c.id          as company_id,
+                   c.name        as company_name,
+                   c.city        as company_city,
+                   p.name        as profession_name
             FROM vacancy_responses vr
-            JOIN vacancies v ON vr.vacancy_id = v.id
-            JOIN companies c ON v.company_id = c.id
-            LEFT JOIN professions p ON v.profession_id = p.id
-            WHERE vr.applicant_id = (
-                SELECT id FROM applicants WHERE user_id = ?
-            )
+                     JOIN vacancies v ON vr.vacancy_id = v.id
+                     JOIN companies c ON v.company_id = c.id
+                     LEFT JOIN professions p ON v.profession_id = p.id
+            WHERE vr.applicant_id = (SELECT id
+                                     FROM applicants
+                                     WHERE user_id = ?)
             ORDER BY vr.created_at DESC
         `;
 
@@ -397,12 +396,13 @@ app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
 
         const query = `
             SELECT rr.id, u.id as user_id, r.id AS resume_id, c.name, rr.message, rr.status, rr.created_at
-            FROM resumes r 
-            JOIN resume_responses rr ON r.id = rr.resume_id
-            JOIN companies c ON c.id = rr.company_id
-            JOIN applicants a ON r.applicant_id = a.id
-            JOIN users u ON u.id = a.id
-            WHERE u.id = ? AND u.user_type = 'applicant'
+            FROM resumes r
+                     JOIN resume_responses rr ON r.id = rr.resume_id
+                     JOIN companies c ON c.id = rr.company_id
+                     JOIN applicants a ON r.applicant_id = a.id
+                     JOIN users u ON u.id = a.user_id
+            WHERE u.id = ?
+              AND u.user_type = 'applicant'
         `;
 
         const resume_responses = await sequelize.query(query, {
@@ -427,16 +427,16 @@ app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
 // проверка работы backend
 app.get('/api/health', async (req, res) => {
     await sequelize.authenticate();
-    res.json({ status: 'OK' });
+    res.json({status: 'OK'});
 });
 
 // для входа
 app.post('/api/auth/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const {email, password} = req.body;
 
         const user = await User.findOne({
-            where: { email: email, is_active: 1 },
+            where: {email: email, is_active: {[Op.ne]: 0}},
             attributes: ['id', 'email', 'first_name', 'last_name', 'password_hash', 'user_type', 'is_active']
         });
 
@@ -463,6 +463,7 @@ app.post('/api/auth/login', async (req, res) => {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 user_type: user.user_type,
+                is_active: user.is_active,
                 full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim()
             }
         });
@@ -479,10 +480,10 @@ app.post('/api/auth/login', async (req, res) => {
 // регистрация
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { email, password, first_name, last_name, user_type, company } = req.body;
+        const {email, password, first_name, last_name, user_type, company} = req.body;
 
         const existingUser = await User.findOne({
-            where: { email: email }
+            where: {email: email}
         });
 
         if (existingUser) {
@@ -492,6 +493,9 @@ app.post('/api/auth/register', async (req, res) => {
             });
         }
 
+        // Для employer устанавливаем is_active = 2 (ожидает верификации)
+        const isActive = user_type === 'employer' ? 2 : 1;
+
         // Создаем пользователя
         const newUser = await User.create({
             email: email,
@@ -499,12 +503,11 @@ app.post('/api/auth/register', async (req, res) => {
             first_name: first_name || null,
             last_name: last_name || null,
             user_type: user_type || 'applicant',
-            is_active: 1
+            is_active: isActive
         });
 
         let profileData = null;
 
-        // Создаем запись в соответствующей таблице в зависимости от типа пользователя
         if (user_type === 'applicant') {
             const newApplicant = await Applicant.create({
                 user_id: newUser.id
@@ -514,16 +517,14 @@ app.post('/api/auth/register', async (req, res) => {
                 type: 'applicant'
             };
         } else if (user_type === 'employer') {
-            // Проверка уникальности ИНН
             if (company && company.inn) {
-                const existingInn = await Company.findOne({ where: { inn: company.inn } });
+                const existingInn = await Company.findOne({where: {inn: company.inn}});
                 if (existingInn) {
-                    await User.destroy({ where: { id: newUser.id } });
-                    return res.status(400).json({ success: false, error: 'Компания с таким ИНН уже зарегистрирована' });
+                    await User.destroy({where: {id: newUser.id}});
+                    return res.status(400).json({success: false, error: 'Компания с таким ИНН уже зарегистрирована'});
                 }
             }
-            // Для работодателя используем имя из регистрации как название компании
-           const newCompany = await Company.create({
+            const newCompany = await Company.create({
                 user_id: newUser.id,
                 name: company?.name || `${first_name} ${last_name}`,
                 description: company?.description || null,
@@ -539,13 +540,14 @@ app.post('/api/auth/register', async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'Регистрация прошла успешно',
+            message: user_type === 'employer' ? 'Регистрация прошла успешно. Ожидайте подтверждения администратора.' : 'Регистрация прошла успешно',
             user: {
                 id: newUser.id,
                 email: newUser.email,
                 first_name: newUser.first_name,
                 last_name: newUser.last_name,
                 user_type: newUser.user_type,
+                is_active: newUser.is_active,
                 full_name: `${newUser.first_name || ''} ${newUser.last_name || ''}`.trim() || email.split('@')[0],
                 profile: profileData
             }
@@ -567,10 +569,10 @@ app.get('/api/professions', async (req, res) => {
             attributes: ['id', 'name'],
             order: [['name', 'ASC']]
         });
-        res.json({ success: true, professions });
+        res.json({success: true, professions});
     } catch (error) {
         console.error('Ошибка получения профессий:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        res.status(500).json({success: false, error: 'Ошибка сервера'});
     }
 });
 
@@ -580,8 +582,8 @@ app.get('/api/vacancy-cities', async (req, res) => {
         const cities = await Vacancy.findAll({
             attributes: ['city'],
             where: {
-                is_active: true,
-                city: { [Op.ne]: null }
+                is_active: 1,
+                city: {[Op.ne]: null}
             },
             group: ['city']
         });
@@ -591,16 +593,16 @@ app.get('/api/vacancy-cities', async (req, res) => {
             .filter(city => city && city !== '')
             .sort();
 
-        res.json({ success: true, cities: cityList });
+        res.json({success: true, cities: cityList});
     } catch (error) {
         console.error('Ошибка получения городов для вакансий:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        res.status(500).json({success: false, error: 'Ошибка сервера'});
     }
 });
 
 // Эндпоинт для городов резюме больше не нужен, так как у резюме нет города
 app.get('/api/resume-cities', async (req, res) => {
-    res.json({ success: true, cities: [] });
+    res.json({success: true, cities: []});
 });
 
 // Получение вакансий с фильтрацией и пагинацией
@@ -620,10 +622,10 @@ app.get('/api/vacancies', async (req, res) => {
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
 
-        const whereClause = { is_active: true };
+        const whereClause = {is_active: 1};
         const includeClause = [
-            { model: Company, attributes: ['id', 'name', 'city', 'logo_url'] },
-            { model: Profession, attributes: ['id', 'name'] }
+            {model: Company, attributes: ['id', 'name', 'city', 'logo_url']},
+            {model: Profession, attributes: ['id', 'name']}
         ];
 
         // Фильтр по профессии
@@ -654,11 +656,11 @@ app.get('/api/vacancies', async (req, res) => {
 
         // Фильтр по зарплате
         if (salary_from && salary_from !== '' && parseInt(salary_from) > 0) {
-            whereClause.salary_to = { [Op.gte]: parseInt(salary_from) };
+            whereClause.salary_to = {[Op.gte]: parseInt(salary_from)};
         }
 
         if (salary_to && salary_to !== '' && parseInt(salary_to) > 0) {
-            whereClause.salary_from = { [Op.lte]: parseInt(salary_to) };
+            whereClause.salary_from = {[Op.lte]: parseInt(salary_to)};
         }
 
         // Поиск по регулярному выражению (остается без изменений)
@@ -667,21 +669,21 @@ app.get('/api/vacancies', async (req, res) => {
             const searchTerms = search.trim().toLowerCase().split(/\s+/);
             const termConditions = searchTerms.map(term => ({
                 [Op.or]: [
-                    { title: { [Op.like]: `%${term}%` } },
-                    { description: { [Op.like]: `%${term}%` } },
-                    { experience_required: { [Op.like]: `%${term}%` } },
-                    { employment_type: { [Op.like]: `%${term}%` } },
-                    { city: { [Op.like]: `%${term}%` } },
-                    { '$Company.name$': { [Op.like]: `%${term}%` } },
-                    { '$Profession.name$': { [Op.like]: `%${term}%` } }
+                    {title: {[Op.like]: `%${term}%`}},
+                    {description: {[Op.like]: `%${term}%`}},
+                    {experience_required: {[Op.like]: `%${term}%`}},
+                    {employment_type: {[Op.like]: `%${term}%`}},
+                    {city: {[Op.like]: `%${term}%`}},
+                    {'$Company.name$': {[Op.like]: `%${term}%`}},
+                    {'$Profession.name$': {[Op.like]: `%${term}%`}}
                 ]
             }));
-            searchCondition = { [Op.and]: termConditions };
+            searchCondition = {[Op.and]: termConditions};
         }
 
-        let finalWhereClause = { ...whereClause };
+        let finalWhereClause = {...whereClause};
         if (searchCondition) {
-            finalWhereClause = { [Op.and]: [whereClause, searchCondition] };
+            finalWhereClause = {[Op.and]: [whereClause, searchCondition]};
         }
 
         const total = await Vacancy.count({
@@ -721,7 +723,7 @@ app.get('/api/vacancies', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка получения вакансий:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        res.status(500).json({success: false, error: 'Ошибка сервера'});
     }
 });
 // Получение одной вакансии по ID
@@ -732,7 +734,7 @@ app.get('/api/vacancies/:id', async (req, res) => {
         const vacancy = await Vacancy.findOne({
             where: {
                 id: vacancyId,
-                is_active: true
+                is_active: 1
             },
             include: [
                 {
@@ -782,13 +784,13 @@ app.get('/api/resumes', async (req, res) => {
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
 
-        const whereClause = { is_active: true };
+        const whereClause = {is_active: 1};
         const includeClause = [
             {
                 model: Applicant,
-                include: [{ model: User, attributes: ['id', 'first_name', 'last_name', 'email'] }]
+                include: [{model: User, attributes: ['id', 'first_name', 'last_name', 'email']}]
             },
-            { model: Profession, attributes: ['id', 'name'] }
+            {model: Profession, attributes: ['id', 'name']}
         ];
 
         // Фильтр по профессии
@@ -798,19 +800,19 @@ app.get('/api/resumes', async (req, res) => {
 
         // Фильтр по опыту
         if (experience && experience !== 'all' && experience !== '') {
-            whereClause.experience = { [Op.like]: `%${experience}%` };
+            whereClause.experience = {[Op.like]: `%${experience}%`};
         }
 
         // Фильтр по зарплате
         if (salary_from && salary_from !== '' && parseInt(salary_from) > 0) {
-            whereClause.salary = { [Op.gte]: parseInt(salary_from) };
+            whereClause.salary = {[Op.gte]: parseInt(salary_from)};
         }
 
         if (salary_to && salary_to !== '' && parseInt(salary_to) > 0) {
             if (whereClause.salary) {
-                whereClause.salary = { ...whereClause.salary, [Op.lte]: parseInt(salary_to) };
+                whereClause.salary = {...whereClause.salary, [Op.lte]: parseInt(salary_to)};
             } else {
-                whereClause.salary = { [Op.lte]: parseInt(salary_to) };
+                whereClause.salary = {[Op.lte]: parseInt(salary_to)};
             }
         }
 
@@ -821,21 +823,21 @@ app.get('/api/resumes', async (req, res) => {
 
             const termConditions = searchTerms.map(term => ({
                 [Op.or]: [
-                    { title: { [Op.like]: `%${term}%` } },
-                    { about: { [Op.like]: `%${term}%` } },
-                    { experience: { [Op.like]: `%${term}%` } },
-                    { '$Profession.name$': { [Op.like]: `%${term}%` } },
-                    { '$Applicant.User.first_name$': { [Op.like]: `%${term}%` } },
-                    { '$Applicant.User.last_name$': { [Op.like]: `%${term}%` } }
+                    {title: {[Op.like]: `%${term}%`}},
+                    {about: {[Op.like]: `%${term}%`}},
+                    {experience: {[Op.like]: `%${term}%`}},
+                    {'$Profession.name$': {[Op.like]: `%${term}%`}},
+                    {'$Applicant.User.first_name$': {[Op.like]: `%${term}%`}},
+                    {'$Applicant.User.last_name$': {[Op.like]: `%${term}%`}}
                 ]
             }));
 
-            searchCondition = { [Op.and]: termConditions };
+            searchCondition = {[Op.and]: termConditions};
         }
 
-        let finalWhereClause = { ...whereClause };
+        let finalWhereClause = {...whereClause};
         if (searchCondition) {
-            finalWhereClause = { [Op.and]: [whereClause, searchCondition] };
+            finalWhereClause = {[Op.and]: [whereClause, searchCondition]};
         }
 
         const total = await Resume.count({
@@ -876,17 +878,17 @@ app.get('/api/resumes', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка получения резюме:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        res.status(500).json({success: false, error: 'Ошибка сервера'});
     }
 });
 
 // Создание отклика на вакансию (с выбором резюме)
 app.post('/api/vacancy-responses', async (req, res) => {
     try {
-        const { vacancy_id, user_id, resume_id, cover_letter } = req.body;
+        const {vacancy_id, user_id, resume_id, cover_letter} = req.body;
 
         const applicant = await Applicant.findOne({
-            where: { user_id: user_id }
+            where: {user_id: user_id}
         });
 
         if (!applicant) {
@@ -898,7 +900,7 @@ app.post('/api/vacancy-responses', async (req, res) => {
 
         // Проверяем, не откликался ли уже
         const existing = await VacancyResponse.findOne({
-            where: { vacancy_id, applicant_id: applicant.id }
+            where: {vacancy_id, applicant_id: applicant.id}
         });
 
         if (existing) {
@@ -923,17 +925,17 @@ app.post('/api/vacancy-responses', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка создания отклика:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        res.status(500).json({success: false, error: 'Ошибка сервера'});
     }
 });
 
 // Создание отклика на резюме (для работодателей)
 app.post('/api/resume-responses', async (req, res) => {
     try {
-        const { resume_id, user_id, message } = req.body;
+        const {resume_id, user_id, message} = req.body;
 
         const company = await Company.findOne({
-            where: { user_id: user_id }
+            where: {user_id: user_id}
         });
 
         if (!company) {
@@ -944,7 +946,7 @@ app.post('/api/resume-responses', async (req, res) => {
         }
 
         const existing = await ResumeResponse.findOne({
-            where: { resume_id, company_id: company.id }
+            where: {resume_id, company_id: company.id}
         });
 
         if (existing) {
@@ -968,7 +970,7 @@ app.post('/api/resume-responses', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка создания приглашения:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        res.status(500).json({success: false, error: 'Ошибка сервера'});
     }
 });
 
@@ -988,7 +990,7 @@ app.get('/api/applicants/by-user/:userId', async (req, res) => {
         );
 
         if (!applicant || applicant.length === 0) {
-            return res.status(404).json({ success: false, error: 'Профиль соискателя не найден' });
+            return res.status(404).json({success: false, error: 'Профиль соискателя не найден'});
         }
 
         res.json({
@@ -997,22 +999,24 @@ app.get('/api/applicants/by-user/:userId', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка получения профиля соискателя:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 });
 
 // Создать резюме
 app.post('/api/resumes', async (req, res) => {
     try {
-        const { applicant_id, profession_id, title, salary, experience, about, is_active } = req.body;
+        const {applicant_id, profession_id, title, salary, experience, about, is_active} = req.body;
 
         if (!title) {
-            return res.status(400).json({ success: false, error: 'Укажите желаемую должность' });
+            return res.status(400).json({success: false, error: 'Укажите желаемую должность'});
         }
 
+        // При создании резюме is_active = 2 (ожидает верификации)
         const result = await sequelize.query(
-            `INSERT INTO resumes (applicant_id, profession_id, title, salary, experience, about, is_active, created_at, updated_at) 
-             VALUES (:applicant_id, :profession_id, :title, :salary, :experience, :about, :is_active, NOW(), NOW())`,
+            `INSERT INTO resumes (applicant_id, profession_id, title, salary, experience, about, is_active, created_at,
+                                  updated_at)
+             VALUES (:applicant_id, :profession_id, :title, :salary, :experience, :about, 2, NOW(), NOW())`,
             {
                 replacements: {
                     applicant_id,
@@ -1020,8 +1024,7 @@ app.post('/api/resumes', async (req, res) => {
                     title,
                     salary: salary || null,
                     experience: experience || '',
-                    about: about || '',
-                    is_active: is_active !== undefined ? is_active : 1
+                    about: about || ''
                 },
                 type: sequelize.QueryTypes.INSERT
             }
@@ -1030,32 +1033,32 @@ app.post('/api/resumes', async (req, res) => {
         const newId = result[0];
 
         const newResume = await sequelize.query(
-            `SELECT r.*, p.name as profession_name 
-             FROM resumes r 
-             LEFT JOIN professions p ON r.profession_id = p.id 
+            `SELECT r.*, p.name as profession_name
+             FROM resumes r
+                      LEFT JOIN professions p ON r.profession_id = p.id
              WHERE r.id = :id`,
             {
-                replacements: { id: newId },
+                replacements: {id: newId},
                 type: sequelize.QueryTypes.SELECT
             }
         );
 
         res.json({
             success: true,
-            message: 'Резюме создано',
+            message: 'Резюме создано и отправлено на модерацию',
             resume: newResume[0]
         });
     } catch (error) {
         console.error('Ошибка создания резюме:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 });
 
 // Обновить резюме
 app.put('/api/resumes/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        const { profession_id, title, salary, experience, about, is_active } = req.body;
+        const {id} = req.params;
+        const {profession_id, title, salary, experience, about} = req.body; // Убрали is_active
 
         const existing = await sequelize.query(
             'SELECT id FROM resumes WHERE id = ? LIMIT 1',
@@ -1066,18 +1069,17 @@ app.put('/api/resumes/:id', async (req, res) => {
         );
 
         if (!existing || existing.length === 0) {
-            return res.status(404).json({ success: false, error: 'Резюме не найдено' });
+            return res.status(404).json({success: false, error: 'Резюме не найдено'});
         }
 
         await sequelize.query(
-            `UPDATE resumes SET 
-                profession_id = :profession_id,
-                title = :title,
-                salary = :salary,
-                experience = :experience,
-                about = :about,
-                is_active = :is_active,
-                updated_at = NOW()
+            `UPDATE resumes
+             SET profession_id = :profession_id,
+                 title         = :title,
+                 salary        = :salary,
+                 experience    = :experience,
+                 about         = :about,
+                 updated_at    = NOW()
              WHERE id = :id`,
             {
                 replacements: {
@@ -1086,20 +1088,19 @@ app.put('/api/resumes/:id', async (req, res) => {
                     title,
                     salary: salary || null,
                     experience: experience || '',
-                    about: about || '',
-                    is_active: is_active !== undefined ? is_active : 1
+                    about: about || ''
                 },
                 type: sequelize.QueryTypes.UPDATE
             }
         );
 
         const updatedResume = await sequelize.query(
-            `SELECT r.*, p.name as profession_name 
-             FROM resumes r 
-             LEFT JOIN professions p ON r.profession_id = p.id 
+            `SELECT r.*, p.name as profession_name
+             FROM resumes r
+                      LEFT JOIN professions p ON r.profession_id = p.id
              WHERE r.id = :id`,
             {
-                replacements: { id },
+                replacements: {id},
                 type: sequelize.QueryTypes.SELECT
             }
         );
@@ -1111,39 +1112,39 @@ app.put('/api/resumes/:id', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка обновления резюме:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 });
 
 // Обновить статус резюме (активно/неактивно)
 app.patch('/api/resumes/:id/status', async (req, res) => {
     try {
-        const { id } = req.params;
-        const { is_active } = req.body;
+        const {id} = req.params;
+        const {is_active} = req.body;
 
         const existing = await sequelize.query(
             'SELECT id FROM resumes WHERE id = ? LIMIT 1',
-            { replacements: [id], type: sequelize.QueryTypes.SELECT }
+            {replacements: [id], type: sequelize.QueryTypes.SELECT}
         );
 
         if (!existing || existing.length === 0) {
-            return res.status(404).json({ success: false, error: 'Резюме не найдено' });
+            return res.status(404).json({success: false, error: 'Резюме не найдено'});
         }
 
         await sequelize.query(
             'UPDATE resumes SET is_active = :is_active, updated_at = NOW() WHERE id = :id',
             {
-                replacements: { id, is_active: is_active ? 1 : 0 },
+                replacements: {id, is_active: is_active ? 1 : 0},
                 type: sequelize.QueryTypes.UPDATE
             }
         );
 
         const updatedResume = await sequelize.query(
-            `SELECT r.*, p.name as profession_name 
-             FROM resumes r 
-             LEFT JOIN professions p ON r.profession_id = p.id 
+            `SELECT r.*, p.name as profession_name
+             FROM resumes r
+                      LEFT JOIN professions p ON r.profession_id = p.id
              WHERE r.id = :id`,
-            { replacements: { id }, type: sequelize.QueryTypes.SELECT }
+            {replacements: {id}, type: sequelize.QueryTypes.SELECT}
         );
 
         res.json({
@@ -1153,7 +1154,7 @@ app.patch('/api/resumes/:id/status', async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка обновления статуса резюме:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 });
 
@@ -1165,22 +1166,23 @@ app.get('/api/employer/profile/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                u.id,
-                u.email,
-                u.first_name,
-                u.last_name,
-                u.phone,
-                u.created_at,
-                c.id as company_id,
-                c.name as company_name,
-                c.description as company_description,
-                c.city as company_city,
-                c.logo_url,
-                c.inn
+            SELECT u.id,
+                   u.email,
+                   u.first_name,
+                   u.last_name,
+                   u.phone,
+                   u.created_at,
+                   c.id          as company_id,
+                   c.name        as company_name,
+                   c.description as company_description,
+                   c.city        as company_city,
+                   c.logo_url,
+                   c.inn
             FROM users u
-            LEFT JOIN companies c ON u.id = c.user_id
-            WHERE u.id = ? AND u.user_type = 'employer' AND u.is_active = 1
+                     LEFT JOIN companies c ON u.id = c.user_id
+            WHERE u.id = ?
+              AND u.user_type = 'employer'
+              AND u.is_active IN (1, 2, 3)
         `;
 
         const [results] = await sequelize.query(query, {
@@ -1244,11 +1246,11 @@ app.put('/api/employer/profile/:userId', async (req, res) => {
         } = req.body;
 
         await User.update(
-            { first_name, last_name, phone },
-            { where: { id: userId } }
+            {first_name, last_name, phone},
+            {where: {id: userId}}
         );
 
-        const company = await Company.findOne({ where: { user_id: userId } });
+        const company = await Company.findOne({where: {user_id: userId}});
 
         if (!company) {
             return res.status(404).json({
@@ -1265,7 +1267,7 @@ app.put('/api/employer/profile/:userId', async (req, res) => {
                 logo_url: logo_url,
                 inn: inn
             },
-            { where: { user_id: userId } }
+            {where: {user_id: userId}}
         );
 
         res.json({
@@ -1288,21 +1290,20 @@ app.get('/api/employer/vacancies/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                v.id,
-                v.title,
-                v.description,
-                v.salary_from,
-                v.salary_to,
-                v.city,
-                v.employment_type,
-                v.experience_required,
-                v.is_active,
-                v.created_at,
-                p.name as profession_name
+            SELECT v.id,
+                   v.title,
+                   v.description,
+                   v.salary_from,
+                   v.salary_to,
+                   v.city,
+                   v.employment_type,
+                   v.experience_required,
+                   v.is_active,
+                   v.created_at,
+                   p.name as profession_name
             FROM vacancies v
-            JOIN companies c ON v.company_id = c.id
-            LEFT JOIN professions p ON v.profession_id = p.id
+                     JOIN companies c ON v.company_id = c.id
+                     LEFT JOIN professions p ON v.profession_id = p.id
             WHERE c.user_id = ?
             ORDER BY v.created_at DESC
         `;
@@ -1332,30 +1333,29 @@ app.get('/api/employer/responses/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                vr.id as response_id,
-                vr.status,
-                vr.created_at as response_date,
-                vr.cover_letter,
-                v.id as vacancy_id,
-                v.title as vacancy_title,
-                v.salary_from,
-                v.salary_to,
-                v.city as vacancy_city,
-                a.id as applicant_id,
-                u.first_name,
-                u.last_name,
-                u.email,
-                u.phone,
-                a.expected_salary,
-                a.experience_years,
-                p.name as profession_name
+            SELECT vr.id         as response_id,
+                   vr.status,
+                   vr.created_at as response_date,
+                   vr.cover_letter,
+                   v.id          as vacancy_id,
+                   v.title       as vacancy_title,
+                   v.salary_from,
+                   v.salary_to,
+                   v.city        as vacancy_city,
+                   a.id          as applicant_id,
+                   u.first_name,
+                   u.last_name,
+                   u.email,
+                   u.phone,
+                   a.expected_salary,
+                   a.experience_years,
+                   p.name        as profession_name
             FROM vacancy_responses vr
-            JOIN vacancies v ON vr.vacancy_id = v.id
-            JOIN companies c ON v.company_id = c.id
-            JOIN applicants a ON vr.applicant_id = a.id
-            JOIN users u ON a.user_id = u.id
-            LEFT JOIN professions p ON a.profession_id = p.id
+                     JOIN vacancies v ON vr.vacancy_id = v.id
+                     JOIN companies c ON v.company_id = c.id
+                     JOIN applicants a ON vr.applicant_id = a.id
+                     JOIN users u ON a.user_id = u.id
+                     LEFT JOIN professions p ON a.profession_id = p.id
             WHERE c.user_id = ?
             ORDER BY vr.created_at DESC
         `;
@@ -1394,26 +1394,25 @@ app.get('/api/employer/resume-responses/:userId', async (req, res) => {
         const userId = req.params.userId;
 
         const query = `
-            SELECT 
-                rr.id,
-                rr.message,
-                rr.status,
-                rr.created_at,
-                r.id as resume_id,
-                r.title as resume_title,
-                r.salary as expected_salary,
-                a.id as applicant_id,
-                u.first_name,
-                u.last_name,
-                u.email,
-                u.phone,
-                p.name as profession_name
+            SELECT rr.id,
+                   rr.message,
+                   rr.status,
+                   rr.created_at,
+                   r.id     as resume_id,
+                   r.title  as resume_title,
+                   r.salary as expected_salary,
+                   a.id     as applicant_id,
+                   u.first_name,
+                   u.last_name,
+                   u.email,
+                   u.phone,
+                   p.name   as profession_name
             FROM resume_responses rr
-            JOIN companies c ON rr.company_id = c.id
-            JOIN resumes r ON rr.resume_id = r.id
-            JOIN applicants a ON r.applicant_id = a.id
-            JOIN users u ON a.user_id = u.id
-            LEFT JOIN professions p ON r.profession_id = p.id
+                     JOIN companies c ON rr.company_id = c.id
+                     JOIN resumes r ON rr.resume_id = r.id
+                     JOIN applicants a ON r.applicant_id = a.id
+                     JOIN users u ON a.user_id = u.id
+                     LEFT JOIN professions p ON r.profession_id = p.id
             WHERE c.user_id = ?
             ORDER BY rr.created_at DESC
         `;
@@ -1441,234 +1440,475 @@ app.get('/api/employer/resume-responses/:userId', async (req, res) => {
 
 // Создать вакансию
 app.post('/api/vacancies', async (req, res) => {
-  try {
-    const {
-      company_id,
-      profession_id,
-      title,
-      description,
-      salary_from,
-      salary_to,
-      city,
-      employment_type,
-      experience_required,
-      is_active
-    } = req.body;
+    try {
+        const {
+            company_id,
+            profession_id,
+            title,
+            description,
+            salary_from,
+            salary_to,
+            city,
+            employment_type,
+            experience_required,
+            is_active
+        } = req.body;
 
-    if (!title || !description) {
-      return res.status(400).json({
-        success: false,
-        error: 'Название и описание обязательны'
-      });
+        if (!title || !description) {
+            return res.status(400).json({
+                success: false,
+                error: 'Название и описание обязательны'
+            });
+        }
+
+        // При создании вакансии is_active = 2 (ожидает верификации)
+        const result = await sequelize.query(
+            `INSERT INTO vacancies (company_id, profession_id, title, description,
+                                    salary_from, salary_to, city, employment_type,
+                                    experience_required, is_active, created_at, updated_at)
+             VALUES (:company_id, :profession_id, :title, :description,
+                     :salary_from, :salary_to, :city, :employment_type,
+                     :experience_required, 2, NOW(), NOW())`,
+            {
+                replacements: {
+                    company_id,
+                    profession_id: profession_id || null,
+                    title,
+                    description,
+                    salary_from: salary_from || null,
+                    salary_to: salary_to || null,
+                    city: city || null,
+                    employment_type: employment_type || null,
+                    experience_required: experience_required || null
+                },
+                type: sequelize.QueryTypes.INSERT
+            }
+        );
+
+        const newId = result[0];
+
+        const newVacancy = await sequelize.query(
+            `SELECT v.*,
+                    c.name as company_name,
+                    p.name as profession_name
+             FROM vacancies v
+                      LEFT JOIN companies c ON v.company_id = c.id
+                      LEFT JOIN professions p ON v.profession_id = p.id
+             WHERE v.id = :id`,
+            {
+                replacements: {id: newId},
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.json({
+            success: true,
+            message: 'Вакансия создана и отправлена на модерацию',
+            vacancy: newVacancy[0]
+        });
+    } catch (error) {
+        console.error('Ошибка создания вакансии:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
-
-    const result = await sequelize.query(
-      `INSERT INTO vacancies (
-        company_id, profession_id, title, description,
-        salary_from, salary_to, city, employment_type,
-        experience_required, is_active, created_at, updated_at
-      ) VALUES (
-        :company_id, :profession_id, :title, :description,
-        :salary_from, :salary_to, :city, :employment_type,
-        :experience_required, :is_active, NOW(), NOW()
-      )`,
-      {
-        replacements: {
-          company_id,
-          profession_id: profession_id || null,
-          title,
-          description,
-          salary_from: salary_from || null,
-          salary_to: salary_to || null,
-          city: city || null,
-          employment_type: employment_type || null,
-          experience_required: experience_required || null,
-          is_active: is_active !== undefined ? is_active : 1
-        },
-        type: sequelize.QueryTypes.INSERT
-      }
-    );
-
-    const newId = result[0];
-
-    // Получаем созданную вакансию с данными о компании и профессии
-    const newVacancy = await sequelize.query(
-      `SELECT v.*, 
-              c.name as company_name,
-              p.name as profession_name
-       FROM vacancies v
-       LEFT JOIN companies c ON v.company_id = c.id
-       LEFT JOIN professions p ON v.profession_id = p.id
-       WHERE v.id = :id`,
-      {
-        replacements: { id: newId },
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
-
-    res.json({
-      success: true,
-      message: 'Вакансия создана',
-      vacancy: newVacancy[0]
-    });
-  } catch (error) {
-    console.error('Ошибка создания вакансии:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
 });
 
 // Обновить вакансию
 app.put('/api/vacancies/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      profession_id,
-      title,
-      description,
-      salary_from,
-      salary_to,
-      city,
-      employment_type,
-      experience_required,
-      is_active
-    } = req.body;
+    try {
+        const {id} = req.params;
+        const {
+            profession_id,
+            title,
+            description,
+            salary_from,
+            salary_to,
+            city,
+            employment_type,
+            experience_required
+        } = req.body; // Убрали is_active
 
-    // Проверяем существование
-    const existing = await sequelize.query(
-      'SELECT id FROM vacancies WHERE id = ? LIMIT 1',
-      {
-        replacements: [id],
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+        // Проверяем существование
+        const existing = await sequelize.query(
+            'SELECT id FROM vacancies WHERE id = ? LIMIT 1',
+            {
+                replacements: [id],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
 
-    if (!existing || existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Вакансия не найдена'
-      });
+        if (!existing || existing.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Вакансия не найдена'
+            });
+        }
+
+        await sequelize.query(
+            `UPDATE vacancies
+             SET profession_id       = :profession_id,
+                 title               = :title,
+                 description         = :description,
+                 salary_from         = :salary_from,
+                 salary_to           = :salary_to,
+                 city                = :city,
+                 employment_type     = :employment_type,
+                 experience_required = :experience_required,
+                 updated_at          = NOW()
+             WHERE id = :id`,
+            {
+                replacements: {
+                    id,
+                    profession_id: profession_id || null,
+                    title,
+                    description,
+                    salary_from: salary_from || null,
+                    salary_to: salary_to || null,
+                    city: city || null,
+                    employment_type: employment_type || null,
+                    experience_required: experience_required || null
+                },
+                type: sequelize.QueryTypes.UPDATE
+            }
+        );
+
+        // Получаем обновленную вакансию
+        const updatedVacancy = await sequelize.query(
+            `SELECT v.*,
+                    c.name as company_name,
+                    p.name as profession_name
+             FROM vacancies v
+                      LEFT JOIN companies c ON v.company_id = c.id
+                      LEFT JOIN professions p ON v.profession_id = p.id
+             WHERE v.id = :id`,
+            {
+                replacements: {id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.json({
+            success: true,
+            message: 'Вакансия обновлена',
+            updatedVacancy: updatedVacancy[0]
+        });
+    } catch (error) {
+        console.error('Ошибка обновления вакансии:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
-
-    await sequelize.query(
-      `UPDATE vacancies SET
-        profession_id = :profession_id,
-        title = :title,
-        description = :description,
-        salary_from = :salary_from,
-        salary_to = :salary_to,
-        city = :city,
-        employment_type = :employment_type,
-        experience_required = :experience_required,
-        is_active = :is_active,
-        updated_at = NOW()
-      WHERE id = :id`,
-      {
-        replacements: {
-          id,
-          profession_id: profession_id || null,
-          title,
-          description,
-          salary_from: salary_from || null,
-          salary_to: salary_to || null,
-          city: city || null,
-          employment_type: employment_type || null,
-          experience_required: experience_required || null,
-          is_active: is_active !== undefined ? is_active : 1
-        },
-        type: sequelize.QueryTypes.UPDATE
-      }
-    );
-
-    // Получаем обновленную вакансию
-    const updatedVacancy = await sequelize.query(
-      `SELECT v.*, 
-              c.name as company_name,
-              p.name as profession_name
-       FROM vacancies v
-       LEFT JOIN companies c ON v.company_id = c.id
-       LEFT JOIN professions p ON v.profession_id = p.id
-       WHERE v.id = :id`,
-      {
-        replacements: { id },
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
-
-    res.json({
-      success: true,
-      message: 'Вакансия обновлена',
-      updatedVacancy: updatedVacancy[0]
-    });
-  } catch (error) {
-    console.error('Ошибка обновления вакансии:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
 });
 
 // Обновить статус вакансии (активно/неактивно)
 app.patch('/api/vacancies/:id/status', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { is_active } = req.body;
+    try {
+        const {id} = req.params;
+        const {is_active} = req.body;
 
-    const existing = await sequelize.query(
-      'SELECT id FROM vacancies WHERE id = ? LIMIT 1',
-      {
-        replacements: [id],
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+        const existing = await sequelize.query(
+            'SELECT id FROM vacancies WHERE id = ? LIMIT 1',
+            {
+                replacements: [id],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
 
-    if (!existing || existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Вакансия не найдена'
-      });
+        if (!existing || existing.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Вакансия не найдена'
+            });
+        }
+
+        await sequelize.query(
+            'UPDATE vacancies SET is_active = :is_active, updated_at = NOW() WHERE id = :id',
+            {
+                replacements: {
+                    id,
+                    is_active: is_active ? 1 : 0
+                },
+                type: sequelize.QueryTypes.UPDATE
+            }
+        );
+
+        const updatedVacancy = await sequelize.query(
+            `SELECT v.*,
+                    c.name as company_name,
+                    p.name as profession_name
+             FROM vacancies v
+                      LEFT JOIN companies c ON v.company_id = c.id
+                      LEFT JOIN professions p ON v.profession_id = p.id
+             WHERE v.id = :id`,
+            {
+                replacements: {id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.json({
+            success: true,
+            message: `Вакансия ${is_active ? 'активирована' : 'деактивирована'}`,
+            vacancy: updatedVacancy[0]
+        });
+    } catch (error) {
+        console.error('Ошибка обновления статуса вакансии:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
+});
 
-    await sequelize.query(
-      'UPDATE vacancies SET is_active = :is_active, updated_at = NOW() WHERE id = :id',
-      {
-        replacements: {
-          id,
-          is_active: is_active ? 1 : 0
-        },
-        type: sequelize.QueryTypes.UPDATE
-      }
-    );
+// ==================== АДМИН-ПАНЕЛЬ ====================
 
-    const updatedVacancy = await sequelize.query(
-      `SELECT v.*, 
-              c.name as company_name,
-              p.name as profession_name
-       FROM vacancies v
-       LEFT JOIN companies c ON v.company_id = c.id
-       LEFT JOIN professions p ON v.profession_id = p.id
-       WHERE v.id = :id`,
-      {
-        replacements: { id },
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+// Получение пользователей для админ-панели
+// Получение пользователей для админ-панели (с пагинацией)
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const { search = '', verification_mode = 'false', page = 1, limit = 10 } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    res.json({
-      success: true,
-      message: `Вакансия ${is_active ? 'активирована' : 'деактивирована'}`,
-      vacancy: updatedVacancy[0]
-    });
-  } catch (error) {
-    console.error('Ошибка обновления статуса вакансии:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+        let whereClause = {};
+
+        if (verification_mode === 'true') {
+            whereClause.is_active = { [Op.in]: [2, 3] };
+        } else {
+            whereClause.is_active = { [Op.in]: [0, 1] };
+        }
+
+        // Поиск по полям
+        if (search && search.trim() !== '') {
+            const searchTerms = search.trim().toLowerCase().split(/\s+/);
+            const searchConditions = searchTerms.map(term => ({
+                [Op.or]: [
+                    { email: { [Op.like]: `%${term}%` } },
+                    { first_name: { [Op.like]: `%${term}%` } },
+                    { last_name: { [Op.like]: `%${term}%` } },
+                    { phone: { [Op.like]: `%${term}%` } }
+                ]
+            }));
+            whereClause[Op.and] = searchConditions;
+        }
+
+        const total = await User.count({ where: whereClause });
+
+        const users = await User.findAll({
+            where: whereClause,
+            attributes: ['id', 'email', 'first_name', 'last_name', 'phone', 'user_type', 'is_active', 'created_at'],
+            order: [['created_at', 'DESC']],
+            limit: parseInt(limit),
+            offset: offset
+        });
+
+        res.json({
+            success: true,
+            users,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Ошибка получения пользователей:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Обновление статуса пользователя (блокировка/разблокировка/верификация)
+app.put('/api/admin/users/:userId/status', async (req, res) => {
+    try {
+        const {userId} = req.params;
+        const {is_active} = req.body;
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({success: false, error: 'Пользователь не найден'});
+        }
+
+        await user.update({is_active});
+
+        res.json({success: true, message: 'Статус пользователя обновлен'});
+    } catch (error) {
+        console.error('Ошибка обновления статуса пользователя:', error);
+        res.status(500).json({success: false, error: error.message});
+    }
+});
+
+// Получение вакансий для админ-панели
+app.get('/api/admin/vacancies', async (req, res) => {
+    try {
+        const {search = '', verification_mode = 'false', page = 1, limit = 10} = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        let whereClause = {};
+
+        if (verification_mode === 'true') {
+            whereClause.is_active = {[Op.in]: [2, 3]};
+        } else {
+            whereClause.is_active = {[Op.in]: [0, 1]};
+        }
+
+        if (search && search.trim() !== '') {
+            const searchTerms = search.trim().toLowerCase().split(/\s+/);
+            const searchConditions = searchTerms.map(term => ({
+                [Op.or]: [
+                    {title: {[Op.like]: `%${term}%`}},
+                    {description: {[Op.like]: `%${term}%`}},
+                    {city: {[Op.like]: `%${term}%`}},
+                    {employment_type: {[Op.like]: `%${term}%`}},
+                    {experience_required: {[Op.like]: `%${term}%`}},
+                    {'$Company.name$': {[Op.like]: `%${term}%`}},
+                    {'$Profession.name$': {[Op.like]: `%${term}%`}}
+                ]
+            }));
+            whereClause[Op.and] = searchConditions;
+        }
+
+        const includeClause = [
+            {model: Company, attributes: ['id', 'name']},
+            {model: Profession, attributes: ['id', 'name']}
+        ];
+
+        const total = await Vacancy.count({where: whereClause, include: includeClause, distinct: true});
+
+        const vacancies = await Vacancy.findAll({
+            where: whereClause,
+            include: includeClause,
+            order: [['created_at', 'DESC']],
+            limit: parseInt(limit),
+            offset: offset,
+            distinct: true
+        });
+
+        res.json({
+            success: true,
+            vacancies,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Ошибка получения вакансий для админ-панели:', error);
+        res.status(500).json({success: false, error: error.message});
+    }
+});
+
+// Обновление статуса вакансии для админ-панели
+app.put('/api/admin/vacancies/:vacancyId/status', async (req, res) => {
+    try {
+        const {vacancyId} = req.params;
+        const {is_active} = req.body;
+
+        const vacancy = await Vacancy.findByPk(vacancyId);
+        if (!vacancy) {
+            return res.status(404).json({success: false, error: 'Вакансия не найдена'});
+        }
+
+        await vacancy.update({is_active});
+
+        res.json({success: true, message: 'Статус вакансии обновлен'});
+    } catch (error) {
+        console.error('Ошибка обновления статуса вакансии:', error);
+        res.status(500).json({success: false, error: error.message});
+    }
+});
+
+// Получение резюме для админ-панели
+app.get('/api/admin/resumes', async (req, res) => {
+    try {
+        const {search = '', verification_mode = 'false', page = 1, limit = 10} = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        let whereClause = {};
+
+        if (verification_mode === 'true') {
+            whereClause.is_active = {[Op.in]: [2, 3]};
+        } else {
+            whereClause.is_active = {[Op.in]: [0, 1]};
+        }
+
+        if (search && search.trim() !== '') {
+            const searchTerms = search.trim().toLowerCase().split(/\s+/);
+            const searchConditions = searchTerms.map(term => ({
+                [Op.or]: [
+                    {title: {[Op.like]: `%${term}%`}},
+                    {about: {[Op.like]: `%${term}%`}},
+                    {experience: {[Op.like]: `%${term}%`}},
+                    {'$Profession.name$': {[Op.like]: `%${term}%`}},
+                    {'$Applicant.User.first_name$': {[Op.like]: `%${term}%`}},
+                    {'$Applicant.User.last_name$': {[Op.like]: `%${term}%`}}
+                ]
+            }));
+            whereClause[Op.and] = searchConditions;
+        }
+
+        const includeClause = [
+            {
+                model: Applicant,
+                include: [{model: User, attributes: ['id', 'first_name', 'last_name', 'email']}]
+            },
+            {model: Profession, attributes: ['id', 'name']}
+        ];
+
+        const total = await Resume.count({where: whereClause, include: includeClause, distinct: true});
+
+        const resumes = await Resume.findAll({
+            where: whereClause,
+            include: includeClause,
+            order: [['created_at', 'DESC']],
+            limit: parseInt(limit),
+            offset: offset,
+            distinct: true
+        });
+
+        const formattedResumes = resumes.map(resume => ({
+            id: resume.id,
+            title: resume.title,
+            salary: resume.salary,
+            experience: resume.experience,
+            about: resume.about,
+            is_active: resume.is_active,
+            Profession: resume.Profession,
+            Applicant: {
+                ...resume.Applicant.toJSON(),
+                User: resume.Applicant.User
+            }
+        }));
+
+        res.json({
+            success: true,
+            resumes: formattedResumes,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Ошибка получения резюме для админ-панели:', error);
+        res.status(500).json({success: false, error: error.message});
+    }
+});
+
+// Обновление статуса резюме для админ-панели
+app.put('/api/admin/resumes/:resumeId/status', async (req, res) => {
+    try {
+        const {resumeId} = req.params;
+        const {is_active} = req.body;
+
+        const resume = await Resume.findByPk(resumeId);
+        if (!resume) {
+            return res.status(404).json({success: false, error: 'Резюме не найдено'});
+        }
+
+        await resume.update({is_active});
+
+        res.json({success: true, message: 'Статус резюме обновлен'});
+    } catch (error) {
+        console.error('Ошибка обновления статуса резюме:', error);
+        res.status(500).json({success: false, error: error.message});
+    }
 });
 
 // ==================== ЗАПУСК СЕРВЕРА ====================
@@ -1683,7 +1923,7 @@ async function startServer() {
     }
 
     try {
-        await sequelize.sync({ alter: false });
+        await sequelize.sync({alter: false});
         console.log('Модели синхронизированы\n');
     } catch (error) {
         console.warn('Ошибка синхронизации моделей:', error.message);

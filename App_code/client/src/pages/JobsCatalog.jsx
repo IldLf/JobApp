@@ -285,11 +285,11 @@ const JobsCatalog = ({ user, onLogout }) => {
 
     // Проверка, может ли пользователь откликаться
     const canRespondToVacancy = () => {
-        return user && user.user_type === 'applicant';
+        return user && user.user_type === 'applicant' && user.is_active === 1;
     };
 
     const canRespondToResume = () => {
-        return user && user.user_type === 'employer';
+        return user && user.user_type === 'employer' && user.is_active === 1;
     };
 
     // Получаем текущие фильтры в зависимости от активной вкладки
@@ -488,7 +488,7 @@ const JobsCatalog = ({ user, onLogout }) => {
                                                         </span>
                                                     </div>
                                                     <div className="vacancy-company">{vac.Company?.name || 'Компания'} • {vac.city || 'Не указан'}</div>
-                                                    <div className="vacancy-description">{vac.description}</div>
+                                                    <div className="vacancy-description">{vac.description?.substring(0, 100)}...</div>
                                                     <div className="vacancy-tags">
                                                         {vac.experience_required && (
                                                             <span className="vacancy-tag experience">{vac.experience_required}</span>
@@ -557,7 +557,7 @@ const JobsCatalog = ({ user, onLogout }) => {
                                                             {resume.experience || 'Опыт не указан'} •
                                                             {resume.salary ? `${resume.salary} ₽` : 'з/п не указана'}
                                                         </div>
-                                                        <div className="vacancy-description">{resume.about}</div>
+                                                        <div className="vacancy-description">{resume.about?.substring(0, 100)}...</div>
                                                         <div className="resume-skills">
                                                             {resume.Profession && (
                                                                 <span className="resume-skill">{resume.Profession.name}</span>

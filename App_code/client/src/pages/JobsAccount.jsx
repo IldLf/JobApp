@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import Header from '../components/Header';
-import { useLocation, useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import '../styles/JobsAccount.css';
 import profileService from '../services/profileService';
 import ResumeForm from './ResumeForm';
@@ -9,67 +9,81 @@ import VacancyForm from './VacancyForm';
 // КОНСТАНТЫ ДАННЫХ
 
 const CITIES = [
-    { value: 'Москва', label: 'Москва' },
-    { value: 'Санкт-Петербург', label: 'Санкт-Петербург' },
-    { value: 'Новосибирск', label: 'Новосибирск' },
-    { value: 'Екатеринбург', label: 'Екатеринбург' },
-    { value: 'Казань', label: 'Казань' }
+    {value: 'Москва', label: 'Москва'},
+    {value: 'Санкт-Петербург', label: 'Санкт-Петербург'},
+    {value: 'Новосибирск', label: 'Новосибирск'},
+    {value: 'Екатеринбург', label: 'Екатеринбург'},
+    {value: 'Казань', label: 'Казань'}
 ];
 
 const PROFESSIONS = [
-    { value: '1', label: 'Python разработчик' },
-    { value: '2', label: 'Java разработчик' },
-    { value: '3', label: 'JavaScript разработчик' },
-    { value: '4', label: 'Frontend разработчик' },
-    { value: '5', label: 'Backend разработчик' },
-    { value: '6', label: 'Fullstack разработчик' }
+    {value: '1', label: 'Python разработчик'},
+    {value: '2', label: 'Java разработчик'},
+    {value: '3', label: 'JavaScript разработчик'},
+    {value: '4', label: 'Frontend разработчик'},
+    {value: '5', label: 'Backend разработчик'},
+    {value: '6', label: 'Fullstack разработчик'}
 ];
 
 const NOTIFICATIONS = [
-    { 
-        id: 1, 
-        title: 'Новые вакансии по подписке', 
+    {
+        id: 1,
+        title: 'Новые вакансии по подписке',
         description: 'Получать уведомления о новых вакансиях, соответствующих вашему профилю',
-        defaultChecked: true 
+        defaultChecked: true
     },
-    { 
-        id: 2, 
-        title: 'Отклики на вакансии', 
+    {
+        id: 2,
+        title: 'Отклики на вакансии',
         description: 'Уведомления о статусе ваших откликов',
-        defaultChecked: true 
+        defaultChecked: true
     },
-    { 
-        id: 3, 
-        title: 'Приглашения от компаний', 
+    {
+        id: 3,
+        title: 'Приглашения от компаний',
         description: 'Уведомления о новых приглашениях',
-        defaultChecked: true 
+        defaultChecked: true
     },
-    { 
-        id: 4, 
-        title: 'Новости и обновления', 
+    {
+        id: 4,
+        title: 'Новости и обновления',
         description: 'Информационные рассылки от сервиса',
-        defaultChecked: false 
+        defaultChecked: false
     }
 ];
 
 const TABS = [
-    { id: 'resumes', label: 'Мои резюме' },
-    { id: 'responses', label: 'Отклики на вакансии' },
-    { id: 'invites', label: 'Приглашения от компаний' },
-    { id: 'settings', label: 'Настройки профиля' }
+    {id: 'resumes', label: 'Мои резюме'},
+    {id: 'responses', label: 'Отклики на вакансии'},
+    {id: 'invites', label: 'Приглашения от компаний'},
+    {id: 'settings', label: 'Настройки профиля'}
 ];
 
 // Функция для форматирования статуса отклика
 const formatResponseStatus = (status) => {
     const statusMap = {
-        'pending': { text: 'На рассмотрении', class: 'status-pending' },
-        'viewed': { text: 'Просмотрено', class: 'status-viewed' },
-        'accepted': { text: 'Принято', class: 'status-accepted' },
-        'rejected': { text: 'Отказ', class: 'status-rejected' }
+        'pending': {text: 'На рассмотрении', class: 'status-pending'},
+        'viewed': {text: 'Просмотрено', class: 'status-viewed'},
+        'accepted': {text: 'Принято', class: 'status-accepted'},
+        'rejected': {text: 'Отказ', class: 'status-rejected'}
     };
-    return statusMap[status] || { text: status, class: 'status-pending' };
+    return statusMap[status] || {text: status, class: 'status-pending'};
 };
 
+const formatItemStatus = (isActive) => {
+    switch (isActive) {
+        case 0:
+            return {text: 'Неактивна', class: 'status-inactive'};
+        case 1:
+            return {text: 'Активен', class: 'status-active'};
+        case 2:
+            return {text: 'На модерации', class: 'status-pending'};
+        case 3:
+            return {text: 'Отклонен', class: 'status-rejected'};
+        default:
+            return {text: 'Неизвестно', class: 'status-pending'};
+    }
+};
 // Функция для форматирования зарплаты
 const formatSalary = (salaryFrom, salaryTo) => {
     if (salaryFrom && salaryTo) {
@@ -95,7 +109,7 @@ const validatePhone = (phone) => {
 
 const formatPhoneForDisplay = (phone) => {
     if (!phone) return '';
-    
+
     let digits = phone.replace(/\D/g, '');
 
     return `${digits}`;
@@ -104,30 +118,30 @@ const formatPhoneForDisplay = (phone) => {
 const formatPhoneInput = (phone) => {
     if (!phone) return null;
     let digits = phone.replace(/\D/g, '');
-    
+
     if (digits.length === 11 && digits[0] === '8') {
         digits = '7' + digits.slice(1);
     }
-    
+
     if (digits.length === 10) {
         digits = '7' + digits;
     }
-    
+
     return digits.length === 11 ? `+${digits}` : null;
 };
 
 const formatPhoneForServer = (phone) => {
     if (!phone) return null;
     let digits = phone.replace(/\D/g, '');
-    
+
     if (digits.length === 11 && digits[0] === '8') {
         digits = '7' + digits.slice(1);
     }
-    
+
     if (digits.length === 10) {
         digits = '7' + digits;
     }
-    
+
     return digits.length === 11 ? `+${digits}` : null;
 };
 
@@ -135,8 +149,7 @@ const formatPhoneForServer = (phone) => {
 const JobsAccount = ({user, onLogout}) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [activeTab, setActiveTab] = useState('settings');
-    const [message, setMessage] = useState({ text: '', type: 'info', visible: false });
+    const [message, setMessage] = useState({text: '', type: 'info', visible: false});
     const [loading, setLoading] = useState(true);
 
     const [userData, setUserData] = useState(null);
@@ -146,7 +159,7 @@ const JobsAccount = ({user, onLogout}) => {
     const [userResponsesData, setUserResponsesData] = useState([]);
     const [resumeResponses, setResumeResponses] = useState([]);
 
-    
+
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -174,6 +187,21 @@ const JobsAccount = ({user, onLogout}) => {
     const [employerResponses, setEmployerResponses] = useState([]);
     const [employerResumeResponses, setEmployerResumeResponses] = useState([]);
 
+    const getDefaultTab = () => {
+        const currentUser = localStorage.getItem('user');
+        if (!currentUser) return 'settings';
+        const user = JSON.parse(currentUser);
+
+        if (user.user_type === 'applicant') {
+            return 'resumes';
+        } else if (user.user_type === 'employer') {
+            return 'vacancies';
+        }
+        return 'settings';
+    };
+
+    const [activeTab, setActiveTab] = useState(getDefaultTab());
+
 
     const [isResumeFormOpen, setIsResumeFormOpen] = useState(false);
     const [resumeToEdit, setResumeToEdit] = useState(null);
@@ -182,11 +210,11 @@ const JobsAccount = ({user, onLogout}) => {
     const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
     const [vacancyToEdit, setVacancyToEdit] = useState(null);
 
-    useEffect(() => { 
-        loadUserData(); 
+    useEffect(() => {
+        loadUserData();
     }, []);
 
-    useEffect(() => { 
+    useEffect(() => {
         const currentUser = localStorage.getItem('user');
         if (!currentUser) return;
         const user = JSON.parse(currentUser);
@@ -205,8 +233,7 @@ const JobsAccount = ({user, onLogout}) => {
                 expected_salary: userApplicantData.expected_salary || '',
                 education: userApplicantData.education || ''
             });
-        }
-        else if (user.user_type === 'employer' && userData && employerData) {
+        } else if (user.user_type === 'employer' && userData && employerData) {
             setFormData({
                 first_name: userData.first_name || '',
                 last_name: userData.last_name || '',
@@ -227,15 +254,15 @@ const JobsAccount = ({user, onLogout}) => {
         if (location.state?.tab && user) {
             // Устанавливаем нужную вкладку
             setActiveTab(location.state.tab);
-            
+
             // Если нужно открыть форму создания резюме
             if (location.state.openForm && location.state.tab === 'resumes') {
                 setResumeToEdit(null);
                 setIsResumeFormOpen(true);
             }
-     
+
             // Очищаем state, чтобы при обновлении страницы не срабатывало снова
-            navigate('/account', { replace: true, state: {} });
+            navigate('/account', {replace: true, state: {}});
         }
     }, [location.state, user]);
 
@@ -251,12 +278,12 @@ const JobsAccount = ({user, onLogout}) => {
 
         try {
             const user = JSON.parse(currentUser);
-            
+
             if (user.user_type === 'applicant') {
                 // получаем профиль искателя работ
                 const profileResult = await profileService.getApplicantData(user.id);
                 console.log('Данные пользователя:', profileResult);
-                
+
                 if (profileResult.success) {
                     setUserData(profileResult.profile.user);
                     setUserApplicantData(profileResult.profile.applicant);
@@ -266,7 +293,7 @@ const JobsAccount = ({user, onLogout}) => {
 
                 const resumesResult = await profileService.getApplicantResumes(user.id);
                 console.log('Резюме:', resumesResult);
-                
+
                 if (resumesResult.success) {
                     setUserResumeData(resumesResult.resumes || []);
                 }
@@ -291,27 +318,26 @@ const JobsAccount = ({user, onLogout}) => {
                         setResumeResponses(resumeResponsesResult.resume_responses || []);
                     }
                 }
-            }
-            else if (user.user_type === 'employer') {
+            } else if (user.user_type === 'employer') {
                 // Загружаем профиль работодателя
                 const profileResult = await profileService.getEmployerData(user.id);
                 if (profileResult.success) {
                     setUserData(profileResult.profile.user);
                     setEmployerData(profileResult.profile.company);
                 }
-                
+
                 // Загружаем вакансии
                 const vacanciesResult = await profileService.getEmployerVacancies(user.id);
                 if (vacanciesResult.success) {
                     setEmployerVacancies(vacanciesResult.vacancies || []);
                 }
-                
+
                 // Загружаем отклики на вакансии
                 const responsesResult = await profileService.getEmployerResponses(user.id);
                 if (responsesResult.success) {
                     setEmployerResponses(responsesResult.responses || []);
                 }
-                
+
                 // Загружаем отправленные приглашения
                 const resumeResponsesResult = await profileService.getEmployerResumeResponses(user.id);
                 if (resumeResponsesResult.success) {
@@ -323,7 +349,7 @@ const JobsAccount = ({user, onLogout}) => {
             try {
                 const professionsResponse = await fetch('http://localhost:5000/api/professions');
                 const professionsData = await professionsResponse.json();
-                
+
                 if (professionsData.success) {
                     setProfessions(professionsData.professions);
                     console.log('Профессии загружены:', professionsData.professions);
@@ -331,8 +357,8 @@ const JobsAccount = ({user, onLogout}) => {
             } catch (profError) {
                 console.error('Ошибка загрузки профессий:', profError);
                 // Не прерываем выполнение, профессии не критичны
-            }        
-            
+            }
+
         } catch (error) {
             console.error('!!!Ошибка загрузки данных:', error);
             setUserResponsesData([]);
@@ -364,7 +390,7 @@ const JobsAccount = ({user, onLogout}) => {
         try {
             const currentUser = JSON.parse(localStorage.getItem('user'));
             let result;
-            
+
             if (currentUser.user_type === 'applicant') {
                 // Обновляем профиль
                 result = await profileService.updateApplicantProfile(currentUser.id, {
@@ -379,8 +405,7 @@ const JobsAccount = ({user, onLogout}) => {
                     education: formData.education,
                     birth_date: formData.birth_date
                 });
-            }
-            else if (currentUser.user_type === 'employer') {
+            } else if (currentUser.user_type === 'employer') {
                 result = await profileService.updateEmployerProfile(currentUser.id, {
                     first_name: formData.first_name,
                     last_name: formData.last_name,
@@ -422,8 +447,7 @@ const JobsAccount = ({user, onLogout}) => {
                     education: userApplicantData.education || ''
                 });
             }
-        }
-        else if (currentUser.user_type === 'employer') {
+        } else if (currentUser.user_type === 'employer') {
             if (userData && employerData) {
                 setFormData({
                     first_name: userData.first_name || '',
@@ -443,7 +467,7 @@ const JobsAccount = ({user, onLogout}) => {
             new_password: '',
             confirm_password: ''
         });
-        
+
         showMessage('Изменения отменены', 'info');
     };
 
@@ -452,21 +476,21 @@ const JobsAccount = ({user, onLogout}) => {
             showMessage('Новый пароль и подтверждение не совпадают', 'error');
             return;
         }
-        
+
         if (passwordData.new_password.length < 6) {
             showMessage('Пароль должен содержать минимум 6 символов', 'error');
             return;
         }
-        
+
         setSaving(true);
         try {
             const currentUser = JSON.parse(localStorage.getItem('user'));
-            
+
             const result = await profileService.updatePassword(currentUser.id, {
                 current_password: passwordData.current_password,
                 new_password: passwordData.new_password
             });
-            
+
             if (result.success) {
                 showMessage('Пароль успешно изменен!', 'success');
                 setPasswordData({
@@ -485,11 +509,11 @@ const JobsAccount = ({user, onLogout}) => {
     };
 
     const handleFormChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => ({...prev, [field]: value}));
     };
 
     const handlePasswordChange = (field, value) => {
-        setPasswordData(prev => ({ ...prev, [field]: value }));
+        setPasswordData(prev => ({...prev, [field]: value}));
     };
 
     if (loading) { // экран загрузки
@@ -502,8 +526,8 @@ const JobsAccount = ({user, onLogout}) => {
     }
 
     const showMessage = (text, type = 'info') => { // вылетающее сообщение
-        setMessage({ text, type, visible: true });
-        setTimeout(() => setMessage(prev => ({ ...prev, visible: false })), 3000);
+        setMessage({text, type, visible: true});
+        setTimeout(() => setMessage(prev => ({...prev, visible: false})), 3000);
     };
 
     const handleAction = (action) => {
@@ -527,44 +551,47 @@ const JobsAccount = ({user, onLogout}) => {
 
     // Открытие формы создания резюме
     const handleCreateResume = () => {
-    setResumeToEdit(null);
-    setIsResumeFormOpen(true);
+        setResumeToEdit(null);
+        setIsResumeFormOpen(true);
     };
 
     // Открытие то же формы но для редактирования резюме
     const handleEditResume = (resume) => {
-    setResumeToEdit(resume);
-    setIsResumeFormOpen(true);
+        setResumeToEdit(resume);
+        setIsResumeFormOpen(true);
     };
 
     // После сохранения резюме
     const handleResumeSaved = (savedResume) => {
-    // Обновляем список резюме
-    if (resumeToEdit) {
-        // Редактирование - обновляем существующее
-        setUserResumeData(prev => 
-        prev.map(r => r.id === savedResume.id ? savedResume : r)
-        );
-    } else {
-        // Создание - добавляем новое
-        setUserResumeData(prev => [...prev, savedResume]);
-    }
-    showMessage(resumeToEdit ? 'Резюме обновлено' : 'Резюме создано');
+        // Обновляем список резюме
+        if (resumeToEdit) {
+            // Редактирование - обновляем существующее
+            setUserResumeData(prev =>
+                prev.map(r => r.id === savedResume.id ? savedResume : r)
+            );
+        } else {
+            // Создание - добавляем новое
+            setUserResumeData(prev => [...prev, savedResume]);
+        }
+        showMessage(resumeToEdit ? 'Резюме обновлено' : 'Резюме создано');
     };
 
     // Переключение статуса резюме (активно/неактивно)
     const handleToggleResumeStatus = async (resume) => {
-        const newStatus = !resume.is_active; // инвертируем текущий статус
-        
+        if (resume.is_active === 2 || resume.is_active === 3) {
+            showMessage('Этот элемент находится на модерации. Вы не можете изменить его статус.', 'error');
+            return;
+        }
+
+        const newStatus = resume.is_active === 0 ? 1 : 0;
+
         try {
             const result = await profileService.toggleResumeStatus(resume.id, newStatus);
-            
             if (result.success) {
-                // Обновляем локальный стейт
-                setUserResumeData(prev => 
-                    prev.map(r => 
-                        r.id === resume.id 
-                            ? { ...r, is_active: newStatus } 
+                setUserResumeData(prev =>
+                    prev.map(r =>
+                        r.id === resume.id
+                            ? {...r, is_active: newStatus}
                             : r
                     )
                 );
@@ -584,84 +611,94 @@ const JobsAccount = ({user, onLogout}) => {
             // Находим индекс резюме
             const index = prev.findIndex(r => r.id === resumeId);
             if (index <= 0) return prev; // уже наверху
-            
+
             // Копируем массив
             const newArray = [...prev];
             // Вырезаем элемент
             const [boosted] = newArray.splice(index, 1);
             // Вставляем в начало
             newArray.unshift(boosted);
-            
+
             return newArray;
         });
-        
+
         showMessage('Резюме поднято в списке');
     };
 
     // Открытие формы создания вакансии
     const handleCreateVacancy = () => {
-    setVacancyToEdit(null);
-    setIsVacancyFormOpen(true);
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        if (currentUser.user_type === 'employer' && currentUser.is_active !== 1) {
+            showMessage('Ваша учетная запись ожидает верификации. Вы не можете создавать вакансии.', 'error');
+            return;
+        }
+        setVacancyToEdit(null);
+        setIsVacancyFormOpen(true);
     };
 
     // Открытие формы редактирования
     const handleEditVacancy = (vacancy) => {
-    setVacancyToEdit(vacancy);
-    setIsVacancyFormOpen(true);
+        setVacancyToEdit(vacancy);
+        setIsVacancyFormOpen(true);
     };
 
     // После сохранения вакансии
     const handleVacancySaved = (savedVacancy) => {
-    if (vacancyToEdit) {
-        // Редактирование
-        setEmployerVacancies(prev =>
-        prev.map(v => v.id === savedVacancy.id ? savedVacancy : v)
-        );
-    } else {
-        // Создание
-        setEmployerVacancies(prev => [...prev, savedVacancy]);
-    }
-    showMessage(vacancyToEdit ? 'Вакансия обновлена' : 'Вакансия создана');
+        if (vacancyToEdit) {
+            // Редактирование
+            setEmployerVacancies(prev =>
+                prev.map(v => v.id === savedVacancy.id ? savedVacancy : v)
+            );
+        } else {
+            // Создание
+            setEmployerVacancies(prev => [...prev, savedVacancy]);
+        }
+        showMessage(vacancyToEdit ? 'Вакансия обновлена' : 'Вакансия создана');
     };
 
     // Переключение статуса вакансии
     const handleToggleVacancyStatus = async (vacancy) => {
-    const newStatus = !vacancy.is_active;
-
-    try {
-        const result = await profileService.toggleVacancyStatus(vacancy.id, newStatus);
-
-        if (result.success) {
-        setEmployerVacancies(prev =>
-            prev.map(v =>
-            v.id === vacancy.id
-                ? { ...v, is_active: newStatus }
-                : v
-            )
-        );
-        showMessage(newStatus ? 'Вакансия активирована' : 'Вакансия деактивирована');
-        } else {
-        alert(`Ошибка: ${result.error}`);
+        if (vacancy.is_active === 2 || vacancy.is_active === 3) {
+            showMessage('Эта вакансия находится на модерации. Вы не можете изменить её статус.', 'error');
+            return;
         }
-    } catch (error) {
-        console.error('Error toggling vacancy status:', error);
-        alert('Ошибка соединения с сервером');
-    }
+
+        const newStatus = vacancy.is_active === 0 ? 1 : 0;
+
+        try {
+            const result = await profileService.toggleVacancyStatus(vacancy.id, newStatus);
+
+            if (result.success) {
+                setEmployerVacancies(prev =>
+                    prev.map(v =>
+                        v.id === vacancy.id
+                            ? {...v, is_active: newStatus}
+                            : v
+                    )
+                );
+                showMessage(newStatus ? 'Вакансия активирована' : 'Вакансия деактивирована');
+            } else {
+                alert(`Ошибка: ${result.error}`);
+            }
+        } catch (error) {
+            console.error('Error toggling vacancy status:', error);
+            alert('Ошибка соединения с сервером');
+        }
     };
-    
+
     const getTabs = () => {
         const currentUser = localStorage.getItem('user');
         if (!currentUser) return TABS;
         const user = JSON.parse(currentUser);
-        
+
         if (user.user_type === 'applicant') {
             return TABS;
         } else {
             return [
-                { id: 'vacancies', label: 'Мои вакансии' },
-                { id: 'received-responses', label: 'Полученные отклики' },
-                { id: 'sent-invites', label: 'Отправленные приглашения' },
-                { id: 'settings', label: 'Настройки профиля' }
+                {id: 'vacancies', label: 'Мои вакансии'},
+                {id: 'received-responses', label: 'Полученные отклики'},
+                {id: 'sent-invites', label: 'Отправленные приглашения'},
+                {id: 'settings', label: 'Настройки профиля'}
             ];
         }
     };
@@ -669,7 +706,7 @@ const JobsAccount = ({user, onLogout}) => {
     return (
         <div className="main-container">
             {/* Хедер */}
-            <Header user={user} onLogout={onLogout} />
+            <Header user={user} onLogout={onLogout}/>
 
             {/* Профиль */}
             <div className="profile-section">
@@ -740,27 +777,27 @@ const JobsAccount = ({user, onLogout}) => {
                     <div className="card">
                         <div className="card-header">
                             <h2 className="card-title">Мои резюме</h2>
-                            <button 
-                                className="btn" 
+                            <button
+                                className="btn"
                                 onClick={handleCreateResume}
                             >
                                 + Создать резюме
                             </button>
                         </div>
-                        
+
                         <div className="items-list">
                             {userResumeData.length === 0 ? (
                                 <div className="empty-state">
-                                    <p className='empty-state-p'>У вас пока нет резюме :\</p>
+                                    <p className='empty-state-p'>У вас пока нет резюме</p>
                                 </div>
                             ) : (
                                 userResumeData.map(resume => (
                                     <div key={resume.id} className={`item-card ${!resume.is_active ? 'inactive' : ''}`}>
                                         <div className="item-header">
                                             <span className="item-title">{resume.title}</span>
-                                            {/* Статус с динамическим классом */}
-                                            <span className={`item-status ${resume.is_active ? 'status-active' : 'status-inactive'}`}>
-                                                {resume.is_active ? 'Активно' : 'Не активно'}
+
+                                            <span className={`item-status ${formatItemStatus(resume.is_active).class}`}>
+                                                {formatItemStatus(resume.is_active).text}
                                             </span>
                                         </div>
                                         <div className="item-meta">
@@ -770,17 +807,18 @@ const JobsAccount = ({user, onLogout}) => {
                                             {resume.experience || 'Опыт не указан'}
                                         </div>
                                         <div className="item-actions">
-                                            <button className="item-action-btn" onClick={() => handleEditResume(resume)}>
+                                            <button className="item-action-btn"
+                                                    onClick={() => handleEditResume(resume)}>
                                                 Редактировать
                                             </button>
-                                            <button 
-                                                className="item-action-btn" 
+                                            <button
+                                                className="item-action-btn"
                                                 onClick={() => handleBoostResume(resume.id)}
                                             >
                                                 ⬆️ Повысить
                                             </button>
-                                            
-                                            <button 
+
+                                            <button
                                                 className={`item-action-btn ${!resume.is_active ? 'btn-warning' : ''}`}
                                                 onClick={() => handleToggleResumeStatus(resume)}
                                             >
@@ -802,11 +840,11 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="card-header">
                             <h2 className="card-title">Мои отклики на вакансии</h2>
                         </div>
-                        
+
                         <div className="items-list">
                             {userResponsesData.length === 0 ? (
                                 <div className="empty-state">
-                                    <p className='empty-state-p'>У вас пока нет откликов :\</p>
+                                    <p className='empty-state-p'>У вас пока нет откликов</p>
                                     <button className="btn" onClick={() => navigate('/search')}>
                                         Найти вакансии
                                     </button>
@@ -831,27 +869,29 @@ const JobsAccount = ({user, onLogout}) => {
                                                     💬 {response.cover_letter}
                                                 </div>
                                             )}
-                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
-                                                Отклик отправлен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
+                                            <div className="item-meta"
+                                                 style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
+                                                Отклик
+                                                отправлен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
                                             </div>
                                             <div className="item-actions">
-                                                <button 
-                                                    className="item-action-btn" 
+                                                <button
+                                                    className="item-action-btn"
                                                     onClick={() => handleAction('Просмотреть вакансию')}
                                                 >
                                                     Подробнее
                                                 </button>
                                                 {response.status === 'pending' && (
-                                                    <button 
-                                                        className="item-action-btn" 
+                                                    <button
+                                                        className="item-action-btn"
                                                         onClick={() => handleAction('Отозвать отклик')}
                                                     >
                                                         Отозвать
                                                     </button>
                                                 )}
                                                 {response.status === 'accepted' && (
-                                                    <button 
-                                                        className="item-action-btn" 
+                                                    <button
+                                                        className="item-action-btn"
                                                         onClick={() => handleAction('Связаться с компанией')}
                                                     >
                                                         Связаться
@@ -874,20 +914,21 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="card-header">
                             <h2 className="card-title">Приглашения от компаний</h2>
                         </div>
-                        
+
                         <div className="items-list">
                             {resumeResponses.map(response => (
                                 <div key={response.id} className="item-card">
                                     <div className="item-header">
                                         <span className="item-title">Название приглашения</span>
-                                        <span className={`item-status ${response.status}`}>{handleInviteStatus(response.status)}</span>
+                                        <span
+                                            className={`item-status ${response.status}`}>{handleInviteStatus(response.status)}</span>
                                     </div>
                                     <div className="item-company">{response.name}</div>
                                     <div className="item-meta">{response.created_at}</div>
                                     <div className="vacancy-description">{response.message}</div>
                                     <div className="item-actions">
-                                        <button 
-                                            className="item-action-btn" 
+                                        <button
+                                            className="item-action-btn"
                                             onClick={() => handleAction('Ответ на приглашение')}
                                         >
                                             Ответить
@@ -904,87 +945,87 @@ const JobsAccount = ({user, onLogout}) => {
             {activeTab === 'settings' && (
                 <div className="tab-content active">
                     <div className="card">
-                        <h2 className="card-title" style={{ marginBottom: '30px' }}>Настройки профиля</h2>
-                        
+                        <h2 className="card-title" style={{marginBottom: '30px'}}>Настройки профиля</h2>
+
                         {/* Личные данные */}
                         <div className="settings-section">
                             <h3 className="settings-title">Личные данные</h3>
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>Имя</label>
-                                    <input 
-                                        type="text" 
-                                        value={formData.first_name} 
+                                    <input
+                                        type="text"
+                                        value={formData.first_name}
                                         onChange={(e) => handleFormChange('first_name', e.target.value)}
-                                        placeholder="Введите имя" 
+                                        placeholder="Введите имя"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Фамилия</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={formData.last_name}
                                         onChange={(e) => handleFormChange('last_name', e.target.value)}
-                                        placeholder="Введите фамилию" 
+                                        placeholder="Введите фамилию"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Email</label>
-                                    <input 
-                                        type="email" 
+                                    <input
+                                        type="email"
                                         value={formData.email}
                                         disabled
-                                        style={{ backgroundColor: '#f5f5f5' }}
+                                        style={{backgroundColor: '#f5f5f5'}}
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Телефон</label>
-                                    <input 
-                                        type="tel" 
+                                    <input
+                                        type="tel"
                                         value={formatPhoneForDisplay(formData.phone)}
                                         onChange={(e) => handleFormChange('phone', e.target.value)}
-                                        placeholder="89001234567" 
+                                        placeholder="89001234567"
                                     />
                                 </div>
 
                                 {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
-                                <div className="form-group">
-                                    <label>Дата рождения</label>
-                                    <input 
-                                        type="date" 
-                                        value={formData.birth_date}
-                                        onChange={(e) => handleFormChange('birth_date', e.target.value)}
-                                    />
-                                </div>
+                                    <div className="form-group">
+                                        <label>Дата рождения</label>
+                                        <input
+                                            type="date"
+                                            value={formData.birth_date}
+                                            onChange={(e) => handleFormChange('birth_date', e.target.value)}
+                                        />
+                                    </div>
                                 ) : ('')}
 
                                 {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
-                                <div className="form-group">
-                                    <label>Город</label>
-                                    <select 
-                                        value={formData.city}
-                                        onChange={(e) => handleFormChange('city', e.target.value)}
-                                    >
-                                        <option value="">Выберите город</option>
-                                        {CITIES.map(city => (
-                                            <option key={city.value} value={city.value}>
-                                                {city.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                    <div className="form-group">
+                                        <label>Город</label>
+                                        <select
+                                            value={formData.city}
+                                            onChange={(e) => handleFormChange('city', e.target.value)}
+                                        >
+                                            <option value="">Выберите город</option>
+                                            {CITIES.map(city => (
+                                                <option key={city.value} value={city.value}>
+                                                    {city.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 ) : ('')}
 
                                 {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).user_type === 'applicant' ? (
-                                <div className="form-group full-width">
-                                    <label>О себе</label>
-                                    <textarea 
-                                        value={formData.about}
-                                        onChange={(e) => handleFormChange('about', e.target.value)}
-                                        placeholder="Расскажите о себе"
-                                        rows="4"
-                                    />
-                                </div>
+                                    <div className="form-group full-width">
+                                        <label>О себе</label>
+                                        <textarea
+                                            value={formData.about}
+                                            onChange={(e) => handleFormChange('about', e.target.value)}
+                                            placeholder="Расскажите о себе"
+                                            rows="4"
+                                        />
+                                    </div>
                                 ) : ('')}
                             </div>
                         </div>
@@ -995,7 +1036,7 @@ const JobsAccount = ({user, onLogout}) => {
                                 <div className="form-grid">
                                     <div className="form-group">
                                         <label>Профессия</label>
-                                        <select 
+                                        <select
                                             value={formData.profession}
                                             onChange={(e) => handleFormChange('profession', e.target.value)}
                                         >
@@ -1009,30 +1050,30 @@ const JobsAccount = ({user, onLogout}) => {
                                     </div>
                                     <div className="form-group">
                                         <label>Опыт работы (лет)</label>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="number"
                                             value={formData.experience_years}
                                             onChange={(e) => handleFormChange('experience_years', e.target.value)}
-                                            min="0" 
-                                            max="50" 
+                                            min="0"
+                                            max="50"
                                         />
                                     </div>
                                     <div className="form-group">
                                         <label>Ожидаемая зарплата</label>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="number"
                                             value={formData.expected_salary}
                                             onChange={(e) => handleFormChange('expected_salary', e.target.value)}
-                                            placeholder="Введите сумму" 
+                                            placeholder="Введите сумму"
                                         />
                                     </div>
                                     <div className="form-group">
                                         <label>Образование</label>
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             value={formData.education}
                                             onChange={(e) => handleFormChange('education', e.target.value)}
-                                            placeholder="Введите образование" 
+                                            placeholder="Введите образование"
                                         />
                                     </div>
                                 </div>
@@ -1044,11 +1085,13 @@ const JobsAccount = ({user, onLogout}) => {
                                 <div className="form-grid">
                                     <div className="form-group">
                                         <label>Название компании</label>
-                                        <input type="text" value={formData.company_name} onChange={(e) => handleFormChange('company_name', e.target.value)} />
+                                        <input type="text" value={formData.company_name}
+                                               onChange={(e) => handleFormChange('company_name', e.target.value)}/>
                                     </div>
                                     <div className="form-group">
                                         <label>Город</label>
-                                        <select value={formData.company_city} onChange={(e) => handleFormChange('company_city', e.target.value)}>
+                                        <select value={formData.company_city}
+                                                onChange={(e) => handleFormChange('company_city', e.target.value)}>
                                             <option value="">Выберите город</option>
                                             {CITIES.map(city => (
                                                 <option key={city.value} value={city.value}>{city.label}</option>
@@ -1057,17 +1100,19 @@ const JobsAccount = ({user, onLogout}) => {
                                     </div>
                                     <div className="form-group">
                                         <label>ИНН</label>
-                                        <input 
-                                            type="text" 
-                                            value={formData.inn || ''} 
-                                            disabled 
-                                            style={{ backgroundColor: '#f5f5f5' }}
+                                        <input
+                                            type="text"
+                                            value={formData.inn || ''}
+                                            disabled
+                                            style={{backgroundColor: '#f5f5f5'}}
                                         />
-                                        <small style={{ color: '#999', fontSize: '12px' }}>ИНН нельзя изменить</small>
+                                        <small style={{color: '#999', fontSize: '12px'}}>ИНН нельзя изменить</small>
                                     </div>
                                     <div className="form-group full-width">
                                         <label>Описание компании</label>
-                                        <textarea value={formData.company_description} onChange={(e) => handleFormChange('company_description', e.target.value)} rows="4" />
+                                        <textarea value={formData.company_description}
+                                                  onChange={(e) => handleFormChange('company_description', e.target.value)}
+                                                  rows="4"/>
                                     </div>
                                 </div>
                             </div>
@@ -1079,35 +1124,35 @@ const JobsAccount = ({user, onLogout}) => {
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>Текущий пароль</label>
-                                    <input 
-                                        type="password" 
+                                    <input
+                                        type="password"
                                         value={passwordData.current_password}
                                         onChange={(e) => handlePasswordChange('current_password', e.target.value)}
-                                        placeholder="Введите текущий пароль" 
+                                        placeholder="Введите текущий пароль"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Новый пароль</label>
-                                    <input 
-                                        type="password" 
+                                    <input
+                                        type="password"
                                         value={passwordData.new_password}
                                         onChange={(e) => handlePasswordChange('new_password', e.target.value)}
-                                        placeholder="Введите новый пароль" 
+                                        placeholder="Введите новый пароль"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Подтверждение пароля</label>
-                                    <input 
-                                        type="password" 
+                                    <input
+                                        type="password"
                                         value={passwordData.confirm_password}
                                         onChange={(e) => handlePasswordChange('confirm_password', e.target.value)}
-                                        placeholder="Повторите новый пароль" 
+                                        placeholder="Повторите новый пароль"
                                     />
                                 </div>
                             </div>
-                            <div style={{ marginTop: '15px' }}>
-                                <button 
-                                    className="btn btn-outline" 
+                            <div style={{marginTop: '15px'}}>
+                                <button
+                                    className="btn btn-outline"
                                     onClick={handleSavePassword}
                                     disabled={saving}
                                 >
@@ -1119,7 +1164,7 @@ const JobsAccount = ({user, onLogout}) => {
                         {/* Уведомления */}
                         <div className="settings-section">
                             <h3 className="settings-title">Уведомления</h3>
-                            
+
                             {NOTIFICATIONS.map(notif => (
                                 <div key={notif.id} className="notification-row">
                                     <div className="notification-info">
@@ -1127,9 +1172,9 @@ const JobsAccount = ({user, onLogout}) => {
                                         <p>{notif.description}</p>
                                     </div>
                                     <label className="switch">
-                                        <input 
-                                            type="checkbox" 
-                                            defaultChecked={notif.defaultChecked} 
+                                        <input
+                                            type="checkbox"
+                                            defaultChecked={notif.defaultChecked}
                                         />
                                         <span className="slider"></span>
                                     </label>
@@ -1138,18 +1183,18 @@ const JobsAccount = ({user, onLogout}) => {
                         </div>
 
                         {/* Кнопки действий */}
-                        <div style={{ display: 'flex', gap: '15px', marginTop: '30px' }}>
-                            <button 
-                                className="btn" 
+                        <div style={{display: 'flex', gap: '15px', marginTop: '30px'}}>
+                            <button
+                                className="btn"
                                 onClick={handleSaveProfile}
                                 disabled={saving}
                             >
                                 Сохранить изменения
                             </button>
-                            <button 
-                                className="btn btn-outline" 
+                            <button
+                                className="btn btn-outline"
                                 onClick={handleCancelChanges}
-                            >   
+                            >
                                 Отмена
                             </button>
                         </div>
@@ -1163,15 +1208,31 @@ const JobsAccount = ({user, onLogout}) => {
                     <div className="card">
                         <div className="card-header">
                             <h2 className="card-title">Мои вакансии</h2>
-                            <button className="btn" onClick={handleCreateVacancy}>
+                            <button
+                                className="btn"
+                                onClick={handleCreateVacancy}
+                                disabled={user?.user_type === 'employer' && user?.is_active !== 1}
+                                style={user?.user_type === 'employer' && user?.is_active !== 1 ? {
+                                    opacity: 0.5,
+                                    cursor: 'not-allowed'
+                                } : {}}
+                            >
                                 + Создать вакансию
                             </button>
                         </div>
                         <div className="items-list">
                             {employerVacancies.length === 0 ? (
                                 <div className="empty-state">
-                                    <p className="empty-state-p">У вас пока нет вакансий :\</p>
-                                    <button className="btn" onClick={handleCreateVacancy}>
+                                    <p className="empty-state-p">У вас пока нет вакансий</p>
+                                    <button
+                                        className="btn"
+                                        onClick={handleCreateVacancy}
+                                        disabled={user?.user_type === 'employer' && user?.is_active !== 1}
+                                        style={user?.user_type === 'employer' && user?.is_active !== 1 ? {
+                                            opacity: 0.5,
+                                            cursor: 'not-allowed'
+                                        } : {}}
+                                    >
                                         Создать первую вакансию
                                     </button>
                                 </div>
@@ -1180,34 +1241,35 @@ const JobsAccount = ({user, onLogout}) => {
                                     <div key={vacancy.id} className="item-card">
                                         <div className="item-header">
                                             <span className="item-title">{vacancy.title}</span>
-                                            <span className={`item-status ${vacancy.is_active ? 'status-active' : 'status-inactive'}`}>
-                                                {vacancy.is_active ? 'Активна' : 'Неактивна'}
+                                            <span
+                                                className={`item-status ${formatItemStatus(vacancy.is_active).class}`}>
+                                                {formatItemStatus(vacancy.is_active).text}
                                             </span>
                                         </div>
                                         <div className="item-meta">
-                                            {vacancy.city} • {vacancy.employment_type === 'full-time' ? 'Полная занятость' : 
+                                            {vacancy.city} • {vacancy.employment_type === 'full-time' ? 'Полная занятость' :
                                             vacancy.employment_type === 'part-time' ? 'Частичная занятость' :
-                                            vacancy.employment_type === 'project' ? 'Проектная работа' : 'Стажировка'}
+                                                vacancy.employment_type === 'project' ? 'Проектная работа' : 'Стажировка'}
                                         </div>
                                         <div className="item-meta">
-                                            {vacancy.salary_from && vacancy.salary_to 
+                                            {vacancy.salary_from && vacancy.salary_to
                                                 ? `${vacancy.salary_from.toLocaleString()} - ${vacancy.salary_to.toLocaleString()} ₽`
                                                 : vacancy.salary_from ? `от ${vacancy.salary_from.toLocaleString()} ₽`
-                                                : vacancy.salary_to ? `до ${vacancy.salary_to.toLocaleString()} ₽`
-                                                : 'з/п не указана'}
+                                                    : vacancy.salary_to ? `до ${vacancy.salary_to.toLocaleString()} ₽`
+                                                        : 'з/п не указана'}
                                         </div>
                                         <div className="vacancy-description">
                                             {vacancy.description?.substring(0, 150)}...
                                         </div>
                                         <div className="item-actions">
-                                            <button 
-                                                className="item-action-btn" 
+                                            <button
+                                                className="item-action-btn"
                                                 onClick={() => handleEditVacancy(vacancy)}
                                             >
                                                 Редактировать
                                             </button>
-                                            <button 
-                                                className="item-action-btn" 
+                                            <button
+                                                className="item-action-btn"
                                                 onClick={() => handleToggleVacancyStatus(vacancy)}
                                             >
                                                 {vacancy.is_active ? 'Деактивировать' : 'Активировать'}
@@ -1251,26 +1313,33 @@ const JobsAccount = ({user, onLogout}) => {
                                                 {response.email} • {response.phone || 'Телефон не указан'}
                                             </div>
                                             <div className="item-meta">
-                                                Ожидаемая зарплата: {response.expected_salary ? `${response.expected_salary.toLocaleString()} ₽` : 'не указана'} • Опыт: {response.experience_years || 0} лет
+                                                Ожидаемая
+                                                зарплата: {response.expected_salary ? `${response.expected_salary.toLocaleString()} ₽` : 'не указана'} •
+                                                Опыт: {response.experience_years || 0} лет
                                             </div>
                                             {response.cover_letter && (
                                                 <div className="vacancy-description">
                                                     💬 {response.cover_letter}
                                                 </div>
                                             )}
-                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
-                                                Отклик получен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
+                                            <div className="item-meta"
+                                                 style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
+                                                Отклик
+                                                получен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
                                             </div>
                                             <div className="item-actions">
-                                                <button className="item-action-btn" onClick={() => showMessage('Просмотреть резюме кандидата (демо)')}>
+                                                <button className="item-action-btn"
+                                                        onClick={() => showMessage('Просмотреть резюме кандидата (демо)')}>
                                                     Просмотреть резюме
                                                 </button>
                                                 {response.status === 'pending' && (
                                                     <>
-                                                        <button className="item-action-btn" onClick={() => showMessage('Принять отклик (демо)')}>
+                                                        <button className="item-action-btn"
+                                                                onClick={() => showMessage('Принять отклик (демо)')}>
                                                             Принять
                                                         </button>
-                                                        <button className="item-action-btn" onClick={() => showMessage('Отклонить отклик (демо)')}>
+                                                        <button className="item-action-btn"
+                                                                onClick={() => showMessage('Отклонить отклик (демо)')}>
                                                             Отклонить
                                                         </button>
                                                     </>
@@ -1317,11 +1386,13 @@ const JobsAccount = ({user, onLogout}) => {
                                             <div className="vacancy-description">
                                                 💬 {invite.message || 'Приглашение без сопроводительного текста'}
                                             </div>
-                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                                            <div className="item-meta"
+                                                 style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
                                                 Отправлено: {new Date(invite.created_at).toLocaleDateString('ru-RU')}
                                             </div>
                                             <div className="item-actions">
-                                                <button className="item-action-btn" onClick={() => showMessage('Отменить приглашение (демо)')}>
+                                                <button className="item-action-btn"
+                                                        onClick={() => showMessage('Отменить приглашение (демо)')}>
                                                     Отменить
                                                 </button>
                                             </div>

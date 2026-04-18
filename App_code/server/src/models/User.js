@@ -33,12 +33,12 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 'applicant',
             validate: {
-                isIn: [['applicant', 'employer']]
+                isIn: [['applicant', 'employer', 'admin']]
             }
         },
         is_active: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: true
+            type: DataTypes.SMALLINT,
+            defaultValue: 1
         }
     }, {
         tableName: 'users',

@@ -1,67 +1,89 @@
-/* Модальное окно */
+/* Модальное окно - единый стиль с ResponseModal и ResumeForm */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
 }
 
-.modal-content.vacancy-form {
+.vac-modal-content.vacancy-form {
   background: white;
   border-radius: 12px;
-  width: 90%;
-  max-width: 700px;
+  width: 100%;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.3s ease-out;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 20px 25px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 22px;
-  color: #1a1a1a;
+  font-size: 20px;
+  color: #333;
+  font-weight: 600;
 }
 
 .modal-close {
   background: none;
   border: none;
-  font-size: 32px;
+  font-size: 24px;
   color: #999;
   cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  line-height: 1;
 }
 
 .modal-close:hover {
-  background: #f5f5f5;
-  color: #333;
+  background: #f0f0f0;
+  color: #667eea;
 }
 
 /* Форма */
 form {
-  padding: 24px;
+  padding: 25px;
 }
 
 .form-group {
@@ -69,11 +91,11 @@ form {
 }
 
 .form-group label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: block;
+  margin-bottom: 6px;
   font-weight: 500;
-  color: #333;
+  color: #555;
+  font-size: 14px;
 }
 
 .form-row {
@@ -85,12 +107,15 @@ form {
 input,
 select,
 textarea {
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 15px;
-  transition: border-color 0.2s;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
   font-family: inherit;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+  background: white;
 }
 
 input:focus,
@@ -103,52 +128,56 @@ textarea:focus {
 input.error,
 select.error,
 textarea.error {
-  border-color: #e74c3c;
+  border-color: #dc3545;
 }
 
 .hint {
   display: block;
-  font-size: 13px;
-  color: #888;
+  font-size: 12px;
+  color: #999;
   margin-top: 4px;
   font-style: italic;
 }
 
 .error-message {
-  color: #e74c3c;
-  font-size: 13px;
-  margin-top: 4px;
   display: block;
+  margin-top: 5px;
+  color: #dc3545;
+  font-size: 12px;
 }
 
 textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 100px;
+  line-height: 1.5;
 }
 
-/* Кнопки */
+/* Кнопки - единый стиль с ResponseModal и ResumeForm */
 .form-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 25px;
   padding-top: 20px;
   border-top: 1px solid #e0e0e0;
 }
 
 .btn-cancel,
 .btn-primary {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-cancel {
-  background: #f5f5f5;
+  background: #f0f0f0;
   color: #666;
 }
 
@@ -162,48 +191,48 @@ textarea {
 }
 
 .btn-primary:hover {
-  background: #5568d3;
+  background: #5a6fd8;
 }
 
 .btn-primary:disabled {
-  background: #a0a0a0;
+  opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* Анимации */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Адаптивность */
-@media (max-width: 600px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .modal-content.vacancy-form {
-    width: 95%;
-    max-height: 95vh;
-  }
 }
 
 .required {
   color: #dc3545;
   margin-left: 2px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .modal-content.vacancy-form {
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 15px 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  form {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn-cancel,
+  .btn-primary {
+    width: 100%;
+  }
 }

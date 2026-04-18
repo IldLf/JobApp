@@ -5,10 +5,10 @@ class ProfileService {
         try {
             const response = await fetch(`${API_URL}/applicant/profile/${userId}`);
             const data = await response.json();
-            return data; 
+            return data;
         } catch (error) {
             console.error('Ошибка получения профиля:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -16,12 +16,13 @@ class ProfileService {
         try {
             const response = await fetch(`${API_URL}/applicant/responses/${userId}`);
             const data = await response.json();
-            return data; 
+            return data;
         } catch (error) {
             console.error('Ошибка получения откликов:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
+
     async getApplicantResumes(userId) {
         try {
             const response = await fetch(`${API_URL}/applicant/resumes/${userId}`);
@@ -29,9 +30,10 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения резюме:', error);
-            return { success: false, error: error.message, resumes: [] };
+            return {success: false, error: error.message, resumes: []};
         }
     }
+
     async getApplicantResumeResponses(userId) {
         try {
             const response = await fetch(`${API_URL}/applicant/resume_responses/${userId}`);
@@ -39,7 +41,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения приглашений:', error);
-            return { success: false, error: error.message, resumes: [] };
+            return {success: false, error: error.message, resumes: []};
         }
     }
 
@@ -56,7 +58,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка обновления профиля:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -73,7 +75,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка обновления пароля:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -85,7 +87,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения профиля работодателя:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -102,7 +104,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка обновления профиля работодателя:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -113,7 +115,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения вакансий:', error);
-            return { success: false, error: error.message, vacancies: [] };
+            return {success: false, error: error.message, vacancies: []};
         }
     }
 
@@ -124,7 +126,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения откликов:', error);
-            return { success: false, error: error.message, responses: [] };
+            return {success: false, error: error.message, responses: []};
         }
     }
 
@@ -135,7 +137,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения приглашений:', error);
-            return { success: false, error: error.message, resume_responses: [] };
+            return {success: false, error: error.message, resume_responses: []};
         }
     }
 
@@ -147,7 +149,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения профессий:', error);
-            return { success: false, error: error.message, professions: [] };
+            return {success: false, error: error.message, professions: []};
         }
     }
 
@@ -159,7 +161,7 @@ class ProfileService {
             return data;
         } catch (error) {
             console.error('Ошибка получения профиля соискателя:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -168,14 +170,14 @@ class ProfileService {
         try {
             const response = await fetch(`${API_URL}/resumes`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(resumeData)
             });
             const data = await response.json();
             return data;
         } catch (error) {
             console.error('Ошибка создания резюме:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -184,79 +186,79 @@ class ProfileService {
         try {
             const response = await fetch(`${API_URL}/resumes/${resumeId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(resumeData)
             });
             const data = await response.json();
             return data;
         } catch (error) {
             console.error('Ошибка обновления резюме:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
-    }    
+    }
 
     // Обновить статус резюме (активно/неактивно)
     async toggleResumeStatus(resumeId, isActive) {
         try {
             const response = await fetch(`${API_URL}/resumes/${resumeId}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ is_active: isActive })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({is_active: isActive})
             });
             const data = await response.json();
             return data;
         } catch (error) {
             console.error('Ошибка обновления статуса резюме:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
     // Создать вакансию
     async createVacancy(vacancyData) {
-    try {
-        const response = await fetch(`${API_URL}/vacancies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vacancyData)
-        });
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Ошибка создания вакансии:', error);
-        return { success: false, error: error.message };
-    }
+        try {
+            const response = await fetch(`${API_URL}/vacancies`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(vacancyData)
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка создания вакансии:', error);
+            return {success: false, error: error.message};
+        }
     }
 
     // Обновить вакансию
     async updateVacancy(vacancyId, vacancyData) {
-    try {
-        const response = await fetch(`${API_URL}/vacancies/${vacancyId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vacancyData)
-        });
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Ошибка обновления вакансии:', error);
-        return { success: false, error: error.message };
-    }
+        try {
+            const response = await fetch(`${API_URL}/vacancies/${vacancyId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(vacancyData)
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления вакансии:', error);
+            return {success: false, error: error.message};
+        }
     }
 
     // Обновить статус вакансии
     async toggleVacancyStatus(vacancyId, isActive) {
-    try {
-        const response = await fetch(`${API_URL}/vacancies/${vacancyId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: isActive })
-        });
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Ошибка обновления статуса вакансии:', error);
-        return { success: false, error: error.message };
-    }
+        try {
+            const response = await fetch(`${API_URL}/vacancies/${vacancyId}/status`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({is_active: isActive})
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления статуса вакансии:', error);
+            return {success: false, error: error.message};
+        }
     }
 }
 

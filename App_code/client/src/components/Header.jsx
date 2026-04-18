@@ -11,7 +11,6 @@ const Header = ({ user, onLogout }) => {
     }
   };
 
-  // Функция для получения инициалов
   const getInitials = () => {
     if (!user) return '';
     if (user.first_name) {
@@ -23,7 +22,6 @@ const Header = ({ user, onLogout }) => {
     return 'U';
   };
 
-  // Функция для отображения имени
   const getDisplayName = () => {
     if (!user) return '';
     if (user.full_name && user.full_name !== ' ') {
@@ -45,18 +43,28 @@ const Header = ({ user, onLogout }) => {
           >
             Главная
           </Link>
-          <Link
-              to="/account"
-              className={`nav-link ${location.pathname === '/account' ? 'active' : ''}`}
-          >
-            Личный кабинет
-          </Link>
+          {user?.user_type !== 'admin' && (
+              <Link
+                  to="/account"
+                  className={`nav-link ${location.pathname === '/account' ? 'active' : ''}`}
+              >
+                Личный кабинет
+              </Link>
+          )}
           <Link
               to="/catalog"
               className={`nav-link ${location.pathname === '/catalog' ? 'active' : ''}`}
           >
             Поиск
           </Link>
+          {user?.user_type === 'admin' && (
+              <Link
+                  to="/admin"
+                  className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}
+              >
+                Модерация
+              </Link>
+          )}
         </div>
         {user ? (
             <div className="user-info">

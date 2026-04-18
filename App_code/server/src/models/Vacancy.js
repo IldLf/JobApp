@@ -52,8 +52,8 @@ module.exports = (sequelize) => {
             allowNull: true
         },
         is_active: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: true
+            type: DataTypes.SMALLINT,
+            defaultValue: 1
         }
     }, {
         tableName: 'vacancies',
