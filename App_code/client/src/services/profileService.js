@@ -260,6 +260,66 @@ class ProfileService {
             return {success: false, error: error.message};
         }
     }
+
+    // Обновить статус приглашения (resume_response)
+    async updateResumeResponseStatus(responseId, status) {
+        try {
+            const response = await fetch(`${API_URL}/resume-responses/${responseId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления статуса приглашения:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Удалить приглашение (resume_response)
+    async deleteResumeResponse(responseId) {
+        try {
+            const response = await fetch(`${API_URL}/resume-responses/${responseId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка удаления приглашения:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Обновить статус отклика на вакансию
+    async updateVacancyResponseStatus(responseId, status) {
+        try {
+            const response = await fetch(`${API_URL}/vacancy-responses/${responseId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка обновления статуса отклика:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Удалить отклик на вакансию
+    async deleteVacancyResponse(responseId) {
+        try {
+            const response = await fetch(`${API_URL}/vacancy-responses/${responseId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ошибка удаления отклика:', error);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 export default new ProfileService();

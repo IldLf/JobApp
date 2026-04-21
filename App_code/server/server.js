@@ -389,13 +389,20 @@ app.get('/api/applicant/responses/:userId', async (req, res) => {
     }
 });
 
-// приглашения
+// Получение отправленных приглашений (resume_responses)
 app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
 
         const query = `
-            SELECT rr.id, u.id as user_id, r.id AS resume_id, c.name, rr.message, rr.status, rr.created_at
+            SELECT rr.id,
+                   u.id as user_id,
+                   r.id AS resume_id,
+                   r.title AS resume_title,
+                   c.name,
+                   rr.message,
+                   rr.status,
+                   rr.created_at
             FROM resumes r
                      JOIN resume_responses rr ON r.id = rr.resume_id
                      JOIN companies c ON c.id = rr.company_id
@@ -423,6 +430,45 @@ app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
         });
     }
 });
+
+// Обновление статуса приглашения (resume_response)
+app.patch('/api/resume-responses/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        // Проверка допустимого статуса
+        if (!['pending', 'viewed', 'accepted', 'rejected'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Недопустимый статус'
+            });
+        }
+
+        const existing = await ResumeResponse.findByPk(id);
+        if (!existing) {
+            return res.status(404).json({
+                success: false,
+                error: 'Приглашение не найдено'
+            });
+        }
+
+        await existing.update({ status });
+
+        res.json({
+            success: true,
+            message: 'Статус приглашения обновлен',
+            resume_response: existing
+        });
+    } catch (error) {
+        console.error('Ошибка обновления статуса приглашения:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 
 // проверка работы backend
 app.get('/api/health', async (req, res) => {
@@ -929,6 +975,72 @@ app.post('/api/vacancy-responses', async (req, res) => {
     }
 });
 
+// Обновление статуса отклика на вакансию (vacancy_response)
+app.patch('/api/vacancy-responses/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        // Проверка допустимого статуса
+        if (!['pending', 'viewed', 'accepted', 'rejected'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Недопустимый статус'
+            });
+        }
+
+        const existing = await VacancyResponse.findByPk(id);
+        if (!existing) {
+            return res.status(404).json({
+                success: false,
+                error: 'Отклик не найден'
+            });
+        }
+
+        await existing.update({ status });
+
+        res.json({
+            success: true,
+            message: `Статус отклика изменен на ${status}`,
+            vacancy_response: existing
+        });
+    } catch (error) {
+        console.error('Ошибка обновления статуса отклика:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Удаление отклика на вакансию (vacancy_response)
+app.delete('/api/vacancy-responses/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const existing = await VacancyResponse.findByPk(id);
+        if (!existing) {
+            return res.status(404).json({
+                success: false,
+                error: 'Отклик не найден'
+            });
+        }
+
+        await existing.destroy();
+
+        res.json({
+            success: true,
+            message: 'Отклик удален'
+        });
+    } catch (error) {
+        console.error('Ошибка удаления отклика:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Создание отклика на резюме (для работодателей)
 app.post('/api/resume-responses', async (req, res) => {
     try {
@@ -1388,6 +1500,7 @@ app.get('/api/employer/responses/:userId', async (req, res) => {
     }
 });
 
+
 // Получение отправленных приглашений (resume_responses)
 app.get('/api/employer/resume-responses/:userId', async (req, res) => {
     try {
@@ -1429,6 +1542,34 @@ app.get('/api/employer/resume-responses/:userId', async (req, res) => {
 
     } catch (error) {
         console.error('Ошибка получения отправленных приглашений:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Удаление приглашения (resume_response)
+app.delete('/api/resume-responses/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const existing = await ResumeResponse.findByPk(id);
+        if (!existing) {
+            return res.status(404).json({
+                success: false,
+                error: 'Приглашение не найдено'
+            });
+        }
+
+        await existing.destroy();
+
+        res.json({
+            success: true,
+            message: 'Приглашение удалено'
+        });
+    } catch (error) {
+        console.error('Ошибка удаления приглашения:', error);
         res.status(500).json({
             success: false,
             error: error.message

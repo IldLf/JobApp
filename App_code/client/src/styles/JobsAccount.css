@@ -519,3 +519,47 @@ input:checked + .slider:before {
     vertical-align: center;
     font-size: 30px;
 }
+
+/* Кнопка удаления */
+.btn-danger_modal {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger_modal:hover {
+    background: #c82333;
+}
+
+/* Модальное окно (если ещё нет таких стилей) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}

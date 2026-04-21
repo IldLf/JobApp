@@ -210,6 +210,18 @@ const JobsAccount = ({user, onLogout}) => {
     const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
     const [vacancyToEdit, setVacancyToEdit] = useState(null);
 
+    const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+        isOpen: false,
+        inviteId: null,
+        inviteTitle: ''
+    });
+
+    const [deleteResponseModal, setDeleteResponseModal] = useState({
+        isOpen: false,
+        responseId: null,
+        vacancyTitle: ''
+    });
+
     useEffect(() => {
         loadUserData();
     }, []);
@@ -686,6 +698,125 @@ const JobsAccount = ({user, onLogout}) => {
         }
     };
 
+    // Обновление статуса приглашения (соискатель)
+    const handleUpdateInviteStatus = async (inviteId, newStatus) => {
+        try {
+            const result = await profileService.updateResumeResponseStatus(inviteId, newStatus);
+            if (result.success) {
+                // Обновляем локальный список
+                setResumeResponses(prev =>
+                    prev.map(inv =>
+                        inv.id === inviteId ? { ...inv, status: newStatus } : inv
+                    )
+                );
+                showMessage(`Приглашение ${newStatus === 'accepted' ? 'принято' : 'отклонено'}`, 'success');
+            } else {
+                showMessage(result.error || 'Ошибка изменения статуса', 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка соединения с сервером', 'error');
+        }
+    };
+
+    // Открытие модального окна подтверждения удаления приглашения
+    const openDeleteConfirmModal = (inviteId, inviteTitle) => {
+        setDeleteConfirmModal({
+            isOpen: true,
+            inviteId: inviteId,
+            inviteTitle: inviteTitle
+        });
+    };
+
+    // Закрытие модального окна
+    const closeDeleteConfirmModal = () => {
+        setDeleteConfirmModal({
+            isOpen: false,
+            inviteId: null,
+            inviteTitle: ''
+        });
+    };
+
+    // Удаление приглашения
+    const handleDeleteInvite = async () => {
+        const { inviteId, inviteTitle } = deleteConfirmModal;
+        
+        try {
+            const result = await profileService.deleteResumeResponse(inviteId);
+            if (result.success) {
+                // Обновляем локальный список
+                setEmployerResumeResponses(prev =>
+                    prev.filter(inv => inv.id !== inviteId)
+                );
+                showMessage(`Приглашение "${inviteTitle}" удалено`, 'success');
+                closeDeleteConfirmModal();
+            } else {
+                showMessage(result.error || 'Ошибка удаления приглашения', 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка соединения с сервером', 'error');
+        }
+    };
+
+    // Открытие модального окна подтверждения удаления отклика
+    const openDeleteResponseModal = (responseId, vacancyTitle) => {
+        setDeleteResponseModal({
+            isOpen: true,
+            responseId: responseId,
+            vacancyTitle: vacancyTitle
+        });
+    };
+
+    // Закрытие модального окна
+    const closeDeleteResponseModal = () => {
+        setDeleteResponseModal({
+            isOpen: false,
+            responseId: null,
+            vacancyTitle: ''
+        });
+    };
+
+    // Удаление отклика
+    const handleDeleteResponse = async () => {
+        const { responseId, vacancyTitle } = deleteResponseModal;
+        
+        try {
+            const result = await profileService.deleteVacancyResponse(responseId);
+            if (result.success) {
+                // Обновляем локальный список
+                setUserResponsesData(prev =>
+                    prev.filter(resp => resp.response_id !== responseId)
+                );
+                showMessage(`Отклик на "${vacancyTitle}" удален`, 'success');
+                closeDeleteResponseModal();
+            } else {
+                showMessage(result.error || 'Ошибка удаления отклика', 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка соединения с сервером', 'error');
+        }
+    };
+
+    // Обновление статуса отклика на вакансию (работодатель)
+    const handleUpdateResponseStatus = async (responseId, newStatus) => {
+        try {
+            const result = await profileService.updateVacancyResponseStatus(responseId, newStatus);
+            if (result.success) {
+                // Обновляем локальный список
+                setEmployerResponses(prev =>
+                    prev.map(resp =>
+                        resp.response_id === responseId ? { ...resp, status: newStatus } : resp
+                    )
+                );
+                const statusText = newStatus === 'accepted' ? 'принят' : 'отклонен';
+                showMessage(`Отклик ${statusText}`, 'success');
+            } else {
+                showMessage(result.error || 'Ошибка изменения статуса', 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка соединения с сервером', 'error');
+        }
+    };
+
     const getTabs = () => {
         const currentUser = localStorage.getItem('user');
         if (!currentUser) return TABS;
@@ -840,7 +971,7 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="card-header">
                             <h2 className="card-title">Мои отклики на вакансии</h2>
                         </div>
-
+                        
                         <div className="items-list">
                             {userResponsesData.length === 0 ? (
                                 <div className="empty-state">
@@ -852,6 +983,13 @@ const JobsAccount = ({user, onLogout}) => {
                             ) : (
                                 userResponsesData.map(response => {
                                     const statusInfo = formatResponseStatus(response.status);
+                                    const formattedDate = new Date(response.response_date).toLocaleString('ru-RU', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    });
                                     return (
                                         <div key={response.response_id} className="item-card">
                                             <div className="item-header">
@@ -869,34 +1007,22 @@ const JobsAccount = ({user, onLogout}) => {
                                                     💬 {response.cover_letter}
                                                 </div>
                                             )}
-                                            <div className="item-meta"
-                                                 style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
-                                                Отклик
-                                                отправлен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
+                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                                                Отклик отправлен: {formattedDate}
                                             </div>
                                             <div className="item-actions">
-                                                <button
-                                                    className="item-action-btn"
-                                                    onClick={() => handleAction('Просмотреть вакансию')}
+                                                <button 
+                                                    className="item-action-btn" 
+                                                    onClick={() => navigate(`/vacancy/${response.vacancy_id}`)}
                                                 >
                                                     Подробнее
                                                 </button>
-                                                {response.status === 'pending' && (
-                                                    <button
-                                                        className="item-action-btn"
-                                                        onClick={() => handleAction('Отозвать отклик')}
-                                                    >
-                                                        Отозвать
-                                                    </button>
-                                                )}
-                                                {response.status === 'accepted' && (
-                                                    <button
-                                                        className="item-action-btn"
-                                                        onClick={() => handleAction('Связаться с компанией')}
-                                                    >
-                                                        Связаться
-                                                    </button>
-                                                )}
+                                                <button 
+                                                    className="item-action-btn" 
+                                                    onClick={() => openDeleteResponseModal(response.response_id, response.vacancy_title)}
+                                                >
+                                                    Удалить
+                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -914,28 +1040,54 @@ const JobsAccount = ({user, onLogout}) => {
                         <div className="card-header">
                             <h2 className="card-title">Приглашения от компаний</h2>
                         </div>
-
                         <div className="items-list">
-                            {resumeResponses.map(response => (
-                                <div key={response.id} className="item-card">
-                                    <div className="item-header">
-                                        <span className="item-title">Название приглашения</span>
-                                        <span
-                                            className={`item-status ${response.status}`}>{handleInviteStatus(response.status)}</span>
-                                    </div>
-                                    <div className="item-company">{response.name}</div>
-                                    <div className="item-meta">{response.created_at}</div>
-                                    <div className="vacancy-description">{response.message}</div>
-                                    <div className="item-actions">
-                                        <button
-                                            className="item-action-btn"
-                                            onClick={() => handleAction('Ответ на приглашение')}
-                                        >
-                                            Ответить
-                                        </button>
-                                    </div>
+                            {resumeResponses.length === 0 ? (
+                                <div className="empty-state">
+                                    <p className='empty-state-p'>У вас пока нет приглашений</p>
                                 </div>
-                            ))}
+                            ) : (
+                                resumeResponses.map(response => {
+                                    const formattedDate = new Date(response.created_at).toLocaleString('ru-RU', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    });
+                                    const statusInfo = formatResponseStatus(response.status);
+                                    return (
+                                        <div key={response.id} className="item-card">
+                                            <div className="item-header">
+                                                <span className="item-title">{response.resume_title || 'Резюме'}</span>
+                                                <span className={`item-status ${statusInfo.class}`}>
+                                                    {statusInfo.text}
+                                                </span>
+                                            </div>
+                                            <div className="item-company">{response.name}</div>
+                                            <div className="item-meta">{formattedDate}</div>
+                                            <div className="vacancy-description">{response.message}</div>
+                                            <div className="item-actions">
+                                                {response.status !== 'accepted' && (
+                                                    <button
+                                                        className="item-action-btn"
+                                                        onClick={() => handleUpdateInviteStatus(response.id, 'accepted')}
+                                                    >
+                                                        Принять
+                                                    </button>
+                                                )}
+                                                {response.status !== 'rejected' && (
+                                                    <button
+                                                        className="item-action-btn"
+                                                        onClick={() => handleUpdateInviteStatus(response.id, 'rejected')}
+                                                    >
+                                                        Отклонить
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1298,6 +1450,13 @@ const JobsAccount = ({user, onLogout}) => {
                             ) : (
                                 employerResponses.map(response => {
                                     const statusInfo = formatResponseStatus(response.status);
+                                    const formattedDate = new Date(response.response_date).toLocaleString('ru-RU', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    });
                                     return (
                                         <div key={response.response_id} className="item-card">
                                             <div className="item-header">
@@ -1313,36 +1472,54 @@ const JobsAccount = ({user, onLogout}) => {
                                                 {response.email} • {response.phone || 'Телефон не указан'}
                                             </div>
                                             <div className="item-meta">
-                                                Ожидаемая
-                                                зарплата: {response.expected_salary ? `${response.expected_salary.toLocaleString()} ₽` : 'не указана'} •
-                                                Опыт: {response.experience_years || 0} лет
+                                                Ожидаемая зарплата: {response.expected_salary ? `${response.expected_salary.toLocaleString()} ₽` : 'не указана'} • Опыт: {response.experience_years || 0} лет
                                             </div>
                                             {response.cover_letter && (
                                                 <div className="vacancy-description">
                                                     💬 {response.cover_letter}
                                                 </div>
                                             )}
-                                            <div className="item-meta"
-                                                 style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
-                                                Отклик
-                                                получен: {new Date(response.response_date).toLocaleDateString('ru-RU')}
+                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                                                Отклик получен: {formattedDate}
                                             </div>
                                             <div className="item-actions">
-                                                <button className="item-action-btn"
-                                                        onClick={() => showMessage('Просмотреть резюме кандидата (демо)')}>
+                                                <button 
+                                                    className="item-action-btn" 
+                                                    onClick={() => showMessage('Просмотреть резюме кандидата (демо)')}
+                                                >
                                                     Просмотреть резюме
                                                 </button>
-                                                {response.status === 'pending' && (
+                                                {(response.status === 'pending' || response.status === 'viewed') && (
                                                     <>
-                                                        <button className="item-action-btn"
-                                                                onClick={() => showMessage('Принять отклик (демо)')}>
+                                                        <button 
+                                                            className="item-action-btn" 
+                                                            onClick={() => handleUpdateResponseStatus(response.response_id, 'accepted')}
+                                                        >
                                                             Принять
                                                         </button>
-                                                        <button className="item-action-btn"
-                                                                onClick={() => showMessage('Отклонить отклик (демо)')}>
+                                                        <button 
+                                                            className="item-action-btn" 
+                                                            onClick={() => handleUpdateResponseStatus(response.response_id, 'rejected')}
+                                                        >
                                                             Отклонить
                                                         </button>
                                                     </>
+                                                )}
+                                                {response.status === 'accepted' && (
+                                                    <button 
+                                                        className="item-action-btn" 
+                                                        onClick={() => handleUpdateResponseStatus(response.response_id, 'rejected')}
+                                                    >
+                                                        Отклонить
+                                                    </button>
+                                                )}
+                                                {response.status === 'rejected' && (
+                                                    <button 
+                                                        className="item-action-btn" 
+                                                        onClick={() => handleUpdateResponseStatus(response.response_id, 'accepted')}
+                                                    >
+                                                        Принять
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
@@ -1369,6 +1546,13 @@ const JobsAccount = ({user, onLogout}) => {
                             ) : (
                                 employerResumeResponses.map(invite => {
                                     const statusInfo = formatResponseStatus(invite.status);
+                                    const formattedDate = new Date(invite.created_at).toLocaleString('ru-RU', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    });
                                     return (
                                         <div key={invite.id} className="item-card">
                                             <div className="item-header">
@@ -1386,14 +1570,15 @@ const JobsAccount = ({user, onLogout}) => {
                                             <div className="vacancy-description">
                                                 💬 {invite.message || 'Приглашение без сопроводительного текста'}
                                             </div>
-                                            <div className="item-meta"
-                                                 style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
-                                                Отправлено: {new Date(invite.created_at).toLocaleDateString('ru-RU')}
+                                            <div className="item-meta" style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                                                Отправлено: {formattedDate}
                                             </div>
                                             <div className="item-actions">
-                                                <button className="item-action-btn"
-                                                        onClick={() => showMessage('Отменить приглашение (демо)')}>
-                                                    Отменить
+                                                <button 
+                                                    className="item-action-btn btn-danger" 
+                                                    onClick={() => openDeleteConfirmModal(invite.id, invite.resume_title)}
+                                                >
+                                                    Удалить
                                                 </button>
                                             </div>
                                         </div>
@@ -1427,6 +1612,58 @@ const JobsAccount = ({user, onLogout}) => {
                 vacancyToEdit={vacancyToEdit}
                 professions={professions}
             />
+
+            {/* Модальное окно подтверждения удаления приглашения */}
+            {deleteConfirmModal.isOpen && (
+                <div className="modal-overlay" onClick={closeDeleteConfirmModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Подтверждение удаления</h3>
+                        <p>Вы уверены, что хотите удалить приглашение для резюме <strong>"{deleteConfirmModal.inviteTitle}"</strong>?</p>
+                        <p style={{ fontSize: '14px', color: '#999', marginTop: '10px' }}>Это действие нельзя отменить.</p>
+                        <div className="modal-buttons" style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                            <button 
+                                className="btn btn-outline" 
+                                onClick={closeDeleteConfirmModal}
+                            >
+                                Отмена
+                            </button>
+                            <button 
+                                className="btn btn-danger_modal" 
+                                onClick={handleDeleteInvite}
+                                style={{ background: '#dc3545' }}
+                            >
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Модальное окно подтверждения удаления отклика */}
+            {deleteResponseModal.isOpen && (
+                <div className="modal-overlay" onClick={closeDeleteResponseModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Подтверждение удаления</h3>
+                        <p>Вы уверены, что хотите удалить отклик на вакансию <strong>"{deleteResponseModal.vacancyTitle}"</strong>?</p>
+                        <p style={{ fontSize: '14px', color: '#999', marginTop: '10px' }}>Это действие нельзя отменить.</p>
+                        <div className="modal-buttons" style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                            <button 
+                                className="btn btn-outline" 
+                                onClick={closeDeleteResponseModal}
+                            >
+                                Отмена
+                            </button>
+                            <button 
+                                className="btn btn-danger" 
+                                onClick={handleDeleteResponse}
+                                style={{ background: '#dc3545' }}
+                            >
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
