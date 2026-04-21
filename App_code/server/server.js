@@ -928,6 +928,93 @@ app.get('/api/resumes', async (req, res) => {
     }
 });
 
+// ПОЛУЧЕНИЕ РЕЗЮМЕ ПО ID 
+app.get('/api/resumes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Получаем резюме
+    const resumeResult = await sequelize.query(
+      'SELECT * FROM resumes WHERE id = ?',
+      {
+        replacements: [id],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (resumeResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Резюме не найдено'
+      });
+    }
+
+    const resume = resumeResult[0];
+
+    // 2. Получаем данные пользователя
+    let userInfo = null;
+    if (resume.applicant_id) {
+      const userResult = await sequelize.query(
+        'SELECT first_name, last_name, email FROM users WHERE id = ?',
+        {
+          replacements: [resume.applicant_id],
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+      if (userResult.length > 0) {
+        const user = userResult[0];
+        userInfo = {
+          username: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Не указано',
+          email: user.email
+        };
+      }
+    }
+
+    // 3. Получаем профессию
+    let professionInfo = null;
+    if (resume.profession_id) {
+      const profResult = await sequelize.query(
+        'SELECT name FROM professions WHERE id = ?',
+        {
+          replacements: [resume.profession_id],
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+      if (profResult.length > 0) {
+        professionInfo = { name: profResult[0].name };
+      }
+    }
+
+    // 4. Формируем ответ с правильной структурой
+    res.json({
+      success: true,
+      resume: {
+        id: resume.id,
+        title: resume.title,
+        salary: resume.salary,
+        salary_from: resume.salary, 
+        salary_to: resume.salary,    
+        experience: resume.experience,
+        description: resume.about,
+        about: resume.about,
+        is_active: resume.is_active,
+        applicant_id: resume.applicant_id,
+        profession_id: resume.profession_id,
+        created_at: resume.created_at,
+        updated_at: resume.updated_at,
+        User: userInfo,
+        Profession: professionInfo
+      }
+    });
+  } catch (error) {
+    console.error('Ошибка получения резюме:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Создание отклика на вакансию (с выбором резюме)
 app.post('/api/vacancy-responses', async (req, res) => {
     try {

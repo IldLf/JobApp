@@ -6,6 +6,7 @@ import JobsAccount from "../src/pages/JobsAccount";
 import JobsCatalog from "./pages/JobsCatalog";
 import JobsAdmin from "./pages/JobsAdmin";
 import VacDetails from "./pages/VacDetails";
+import ResumeDetails from "./pages/ResumeDetails";
 import './App.css';
 
 function App() {
@@ -74,6 +75,7 @@ function App() {
                     </AdminRoute>
                 } />
                 <Route path="/vacancy/:id" element={<VacDetails />} />
+                <Route path="/resume/:id" element={<ResumeDetails />} />
             </Routes>
         </Router>
     );

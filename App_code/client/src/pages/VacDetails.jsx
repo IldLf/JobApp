@@ -11,11 +11,12 @@ const VacDetails = () => {
   const [vacancy, setVacancy] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState({ text: '', type: 'info', visible: false });
   const [applying, setApplying] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [user, setUser] = useState(null);
-
+  
   // Для выбора резюме
   const [userResumes, setUserResumes] = useState([]);
   const [selectedResumeId, setSelectedResumeId] = useState('');
@@ -71,6 +72,11 @@ const VacDetails = () => {
     }
   }, [id]);
 
+  const showMessage = (text, type = 'info') => {
+  setMessage({ text, type, visible: true });
+  setTimeout(() => setMessage(prev => ({ ...prev, visible: false })), 3000);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
@@ -79,17 +85,17 @@ const VacDetails = () => {
 
   const handleApply = async () => {
     if (!user || user.user_type !== 'applicant') {
-      alert('Только соискатели могут откликаться на вакансии');
+      showMessage('Только соискатели могут откликаться на вакансии', 'error');
       return;
     }
 
     if (!selectedResumeId) {
-      alert('Пожалуйста, выберите резюме для отклика');
+      showMessage('Пожалуйста, выберите резюме для отклика', 'error');
       return;
     }
 
     if (!coverLetter.trim()) {
-      alert('Пожалуйста, добавьте сопроводительное письмо');
+      showMessage('Пожалуйста, добавьте сопроводительное письмо', 'error');
       return;
     }
 
@@ -114,15 +120,15 @@ const VacDetails = () => {
       const result = await response.json();
 
       if (result.success) {
-        alert('✅ Отклик успешно отправлен!');
+        showMessage('Отклик успешно отправлен', 'success');
         setShowModal(false);
         setCoverLetter('');
       } else {
-        alert(`❌ ${result.error || 'Неизвестная ошибка'}`);
+        showMessage(`${result.error || 'Неизвестная ошибка'}`, 'error');
       }
     } catch (err) {
       console.error('Apply error:', err);
-      alert('Ошибка соединения с сервером. Проверьте, запущен ли сервер.');
+      showMessage('Ошибка соединения с сервером. Проверьте, запущен ли сервер.', 'error');
     } finally {
       setApplying(false);
     }
@@ -130,7 +136,7 @@ const VacDetails = () => {
 
   const canApply = user && user.user_type === 'applicant';
 
-  // Функция для отображения типа занятости на русском
+  // Функция для отображения типа занятост
   const getEmploymentTypeDisplay = (type) => {
     const map = {
       'full-time': 'Полная занятость',
@@ -313,6 +319,14 @@ const VacDetails = () => {
               </div>
             </div>
         )}
+
+        {/* Всплывающее сообщение */}
+        {message.visible && (
+          <div className={`message ${message.type} ${message.visible ? 'show' : ''}`}>
+            {message.text}
+          </div>
+        )}
+
       </div>
   );
 };
