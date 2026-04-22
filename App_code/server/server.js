@@ -1533,6 +1533,7 @@ app.get('/api/employer/responses/:userId', async (req, res) => {
 
         const query = `
             SELECT vr.id         as response_id,
+                   vr.resume_id,
                    vr.status,
                    vr.created_at as response_date,
                    vr.cover_letter,

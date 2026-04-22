@@ -1485,7 +1485,7 @@ const JobsAccount = ({user, onLogout}) => {
                                             <div className="item-actions">
                                                 <button 
                                                     className="item-action-btn" 
-                                                    onClick={() => showMessage('Просмотреть резюме кандидата (демо)')}
+                                                    onClick={() => navigate(`/resume/${response.resume_id}`)}
                                                 >
                                                     Просмотреть резюме
                                                 </button>

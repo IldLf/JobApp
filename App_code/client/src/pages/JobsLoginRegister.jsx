@@ -293,7 +293,7 @@ const JobsLoginRegister = ({onLoginSuccess, onRegisterSuccess}) => {
                                             onChange={(e) => setUserType(e.target.value)}
                                             disabled={loading}
                                         />
-                                        <span>Работодатель / Компания</span>
+                                        <span> Работодатель / Компания</span>
                                     </label>
                                 </div>
                             </div>

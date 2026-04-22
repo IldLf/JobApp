@@ -550,8 +550,10 @@ const JobsCatalog = ({ user, onLogout }) => {
                                                 const fullName = userInfo ? `${userInfo.first_name || ''} ${userInfo.last_name || ''}`.trim() : 'Пользователь';
 
                                                 return (
-                                                    <div key={resume.id} className="resume-card">
-                                                        <div className="resume-name" onClick={() => navigate(`/resume/${resume.id}`)}>{fullName}</div>
+                                                    <div key={resume.id} className="resume-card" style={{background: 'white'}}>
+                                                        <div className="resume-name" 
+                                                            style={{ cursor: 'pointer' }}
+                                                            onClick={() => navigate(`/resume/${resume.id}`)}>{fullName}</div>
                                                         <div className="resume-profession">{resume.title}</div>
                                                         <div className="resume-info">
                                                             {resume.experience || 'Опыт не указан'} •

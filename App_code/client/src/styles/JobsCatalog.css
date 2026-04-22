@@ -411,3 +411,8 @@
     color: #0d6efd; /* или ваш акцентный цвет */
     text-decoration: underline;
 }
+
+.resume-name:hover {
+    color: #0d6efd; /* или ваш акцентный цвет */
+    text-decoration: underline;
+}
