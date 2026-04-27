@@ -1,26 +1,64 @@
 # JobApp
 
-ТЗ: https://disk.360.yandex.ru/d/mXfxiavBfWdupw
+ТЗ: <https://disk.360.yandex.ru/d/mXfxiavBfWdupw>
 
 ## Структура проекта
-**1. AppCode**
+
+### 1. AppCode
+
 - Тут будут папки самого приложения
 
-**2. Documents**
+### 2. Documents
+
 - Architecture (тут находятся важные для архитектуры проекта файлы, напр. диаграммы UML)
 - KnowledgeBase (тут кратко описываются прототипы, форматы и любая другая важная для использования результатов этой задачи информация)
 - IntegrationRules (тут описаны правила интеграции - описания прототипов методов, форматов параметров и возвращаемых значений, по которым производится разработка функций заглушек)
 
-**3. Tests**
+### 3. Tests
+
 - UserTests (тут находятся пользовательские тесты)
 - AutoTests (тут находятся автотесты)
 
-  
 ## Запуск проекта
-1) cd /App_code/client
-2) npm install
-3) npm start
-4) cd /App_code/server
-5) npm install
-6) npm run dev
-### Порт к базе данных находиться в .env в /server по умолчанию 3306
+
+### Подготовка к запуску клиентской части
+
+```bash
+cd App_code\client
+npm install
+```
+
+### Подготовка к запуску серверной части
+
+```bash
+cd App_code\server
+npm install
+```
+
+### Запуск
+
+- Запуск серверной части
+
+```bash
+cd App_code\server
+npm run dev
+```
+
+- Запуск клиентской части
+
+```bash
+cd App_code\client
+npm start
+```
+
+- Проверка работы сервера
+
+```bash
+curl http://localhost:5000/api/health 
+```
+
+Если сервер запущен ответом будет `{"status":"OK"}`
+
+--- 
+
+### Порт к базе данных находится в .env в /server по умолчанию 3306
