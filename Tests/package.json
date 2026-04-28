@@ -1,0 +1,34 @@
+{
+  "name": "jobapp-tests",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "test:coverage": "jest --coverage --runInBand --forceExit",
+    "test:watch": "jest --watch",
+    "test:auth": "jest AutoTests/auth.test.js --forceExit",
+    "test:applicant": "jest AutoTests/applicant.test.js --forceExit",
+    "test:employer": "jest AutoTests/employer.test.js --forceExit",
+    "test:entities": "jest AutoTests/entities.test.js --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/AutoTests"],
+    "testMatch": ["**/*.test.js"],
+    "setupFiles": ["<rootDir>/jest.setup.js"],
+    "moduleNameMapper": {
+      "^@server/(.*)$": "<rootDir>/../App_code/server/$1"
+    },
+    "collectCoverageFrom": [
+      "../App_code/server/**/*.js",
+      "!../App_code/server/node_modules/**"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"]
+  },
+  "dependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "mysql2": "^3.9.7",
+    "dotenv": "^16.3.1"
+  }
+}

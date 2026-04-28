@@ -16,7 +16,8 @@ const VacancyResponse = require('./src/models/VacancyResponse')(sequelize);
 const ResumeResponse = require('./src/models/ResumeResponse')(sequelize);
 
 const app = express();
-const PORT = process.env.PORT;
+module.exports = app;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors({
     origin: 'http://localhost:3000',
@@ -2158,10 +2159,14 @@ async function startServer() {
         console.warn('Ошибка синхронизации моделей:', error.message);
     }
 
-    app.listen(PORT, () => {
-        console.log(`Сервер успешно запущен!\n`);
-        console.log(`Адрес: http://localhost:${PORT}`);
-    });
+    // Если импортирован в тестах — server.listen не выполнится
+    if (require.main === module) {
+        // Если сервер запущен напрямую (npm run dev)
+        app.listen(PORT, () => {
+            console.log(`Сервер успешно запущен!\n`);
+            console.log(`Адрес: http://localhost:${PORT}`);
+        });
+    }
 }
 
 startServer().catch(error => {
