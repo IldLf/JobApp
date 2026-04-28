@@ -35,7 +35,7 @@
 .admin-search-input {
     flex: 1;
     padding: 12px 15px;
-    border: 1px solid #ddd;
+    border: 2px solid #999999;
     border-radius: 5px;
     font-size: 14px;
     transition: border-color 0.3s ease;
@@ -288,4 +288,129 @@
     background: #667eea;
     color: white;
     border-color: #667eea;
+}
+
+/* Стили для статистики */
+.admin-stats-container {
+    padding: 10px 0;
+}
+
+.stats-section-admin {
+    margin-bottom: 40px;
+}
+
+.stats-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+    display: inline-block;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Цвета для статусов откликов */
+.status-pending-card .stat-value {
+    color: #856404;
+}
+.status-pending-card {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.status-viewed-card .stat-value {
+    color: #0c5460;
+}
+.status-viewed-card {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.status-accepted-card .stat-value {
+    color: #155724;
+}
+.status-accepted-card {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.status-rejected-card .stat-value {
+    color: #721c24;
+}
+.status-rejected-card {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Строка для статистики (горизонтальное расположение) */
+.stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+}
+
+.stats-row .stat-card {
+    flex: 1;
+    min-width: 180px;
+}
+
+@media (max-width: 768px) {
+    .stats-row .stat-card {
+        min-width: calc(50% - 20px);
+        flex: 0 0 calc(50% - 20px);
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row .stat-card {
+        min-width: 100%;
+        flex: 0 0 100%;
+    }
 }

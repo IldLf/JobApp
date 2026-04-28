@@ -1894,7 +1894,6 @@ app.patch('/api/vacancies/:id/status', async (req, res) => {
 
 // ==================== АДМИН-ПАНЕЛЬ ====================
 
-// Получение пользователей для админ-панели
 // Получение пользователей для админ-панели (с пагинацией)
 app.get('/api/admin/users', async (req, res) => {
     try {
@@ -2140,6 +2139,94 @@ app.put('/api/admin/resumes/:resumeId/status', async (req, res) => {
     }
 });
 
+// Статистика для админ-панели
+app.get('/api/admin/stats', async (req, res) => {
+    try {
+        // Активные вакансии (is_active = 1)
+        const activeVacancies = await Vacancy.count({
+            where: { is_active: 1 }
+        });
+
+        // Активные резюме (is_active = 1)
+        const activeResumes = await Resume.count({
+            where: { is_active: 1 }
+        });
+
+        // Отклики за последние 30 дней
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const recentResponses = await VacancyResponse.count({
+            where: {
+                created_at: { [Op.gte]: thirtyDaysAgo }
+            }
+        });
+
+        // Приглашения за последние 30 дней
+        const recentResumeResponses = await ResumeResponse.count({
+            where: {
+                created_at: { [Op.gte]: thirtyDaysAgo }
+            }
+        });
+
+        // Новые пользователи за последние 30 дней
+        const newUsers = await User.count({
+            where: {
+                created_at: { [Op.gte]: thirtyDaysAgo }
+            }
+        });
+
+        // Общее количество пользователей
+        const totalUsers = await User.count();
+
+        // Количество работодателей
+        const totalEmployers = await User.count({
+            where: { user_type: 'employer' }
+        });
+
+        // Количество соискателей
+        const totalApplicants = await User.count({
+            where: { user_type: 'applicant' }
+        });
+
+        // Отклики по статусам
+        const responsesByStatus = await VacancyResponse.findAll({
+            attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
+            group: ['status']
+        });
+
+        const statusStats = {
+            pending: 0,
+            viewed: 0,
+            accepted: 0,
+            rejected: 0
+        };
+
+        responsesByStatus.forEach(item => {
+            if (statusStats.hasOwnProperty(item.status)) {
+                statusStats[item.status] = parseInt(item.dataValues.count);
+            }
+        });
+
+        res.json({
+            success: true,
+            stats: {
+                activeVacancies,
+                activeResumes,
+                recentResponses,
+                recentResumeResponses,
+                newUsers,
+                totalUsers,
+                totalEmployers,
+                totalApplicants,
+                responsesByStatus: statusStats
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка получения статистики:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 // ==================== ЗАПУСК СЕРВЕРА ====================
 
 async function startServer() {
