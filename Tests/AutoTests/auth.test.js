@@ -2,6 +2,7 @@
  * @file Тесты для аутентификации: login, register
  * @jest-environment node
  */
+require('dotenv').config({ path: '../App_code/server/.env' });
 
 const request = require('supertest');
 const app = require('../../App_code/server/server');

@@ -14,7 +14,6 @@
     "testEnvironment": "node",
     "roots": ["<rootDir>/AutoTests"],
     "testMatch": ["**/*.test.js"],
-    "setupFiles": ["<rootDir>/jest.setup.js"],
     "moduleNameMapper": {
       "^@server/(.*)$": "<rootDir>/../App_code/server/$1"
     },
