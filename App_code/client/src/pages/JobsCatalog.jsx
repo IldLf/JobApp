@@ -437,9 +437,9 @@ const JobsCatalog = ({ user, onLogout }) => {
                     )}
 
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <button className="apply-filters-btn" onClick={handleApplyFilters}>
+                        {/*<button className="apply-filters-btn" onClick={handleApplyFilters}>
                             Применить фильтры
-                        </button>
+                        </button> */}
                         <button className="apply-filters-btn" onClick={handleResetFilters} style={{ background: '#6c757d' }}>
                             Сбросить
                         </button>
