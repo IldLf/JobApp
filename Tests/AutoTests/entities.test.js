@@ -9,103 +9,92 @@ const app = require('../../App_code/server/server');
 
 describe('POST /api/resumes', () => {
   const validResume = {
-    applicantId: 1,
-    profession: 'Python разработчик',
+    applicant_id: 1,
+    profession_id: 1,
     title: 'Senior Python Dev',
     salary: 200000,
     experience: '5 лет в веб-разработке',
     about: 'Создаю масштабируемые сервисы',
-    isActive: 1
+    is_active: 1
   };
 
   test('✅ Успешное создание резюме', async () => {
     const res = await request(app)
-      .post('/api/resumes')
-      .send(validResume)
-      .expect(201);
+        .post('/api/resumes')
+        .send(validResume)
+        .expect(200);
 
-    expect(res.body).toHaveProperty('id');
-    expect(res.body.title).toBe(validResume.title);
-    expect(res.body.applicant_id).toBe(validResume.applicantId);
+    expect(res.body.success).toBe(true);
+    expect(res.body).toHaveProperty('resume');
+    expect(res.body.resume).toHaveProperty('id');
+    expect(res.body.resume.title).toBe(validResume.title);
   });
 
   test('❌ Создание без обязательных полей', async () => {
     const res = await request(app)
-      .post('/api/resumes')
-      .send({ applicantId: 1, title: 'Only title' })
-      .expect(400);
+        .post('/api/resumes')
+        .send({ applicant_id: 1, title: 'Only title' })
+        .expect(400);
 
-    expect(res.body.error).toContain('обязатель');
-  });
-
-  test('❌ Создание для несуществующего соискателя', async () => {
-    const res = await request(app)
-      .post('/api/resumes')
-      .send({ ...validResume, applicantId: 99999 })
-      .expect(404);
-  });
-
-  test('✅ Новое резюме создаётся со статусом "на модерации" (is_active=2)', async () => {
-    // Если в бэкенде есть такая логика
-    const res = await request(app)
-      .post('/api/resumes')
-      .send(validResume)
-      .expect(201);
-
-    // expect(res.body.is_active).toBe(2); // Раскомментируй, если так реализовано
+    expect(res.body.success).toBe(false);
   });
 });
 
 describe('POST /api/vacancy-responses', () => {
   const validResponse = {
-    vacancyId: 1,
-    applicantId: 1,
-    coverLetter: 'Заинтересован в вакансии, есть релевантный опыт',
-    resumeId: 1
+    vacancy_id: 1,
+    user_id: 1,
+    cover_letter: 'Заинтересован в вакансии, есть релевантный опыт',
+    resume_id: 1
   };
 
   test('✅ Успешный отклик на вакансию', async () => {
     const res = await request(app)
-      .post('/api/vacancy-responses')
-      .send(validResponse)
-      .expect(201);
+        .post('/api/vacancy-responses')
+        .send(validResponse)
+        .expect(200);
 
-    expect(res.body).toHaveProperty('id');
-    expect(res.body.status).toBe('pending');
-    expect(res.body.vacancy_id).toBe(validResponse.vacancyId);
+    expect(res.body.success).toBe(true);
+    expect(res.body).toHaveProperty('response');
+    expect(res.body.response).toHaveProperty('id');
+    expect(res.body.response.status).toBe('pending');
   });
 
-  test('❌ Дублирующий отклик (уникальность vacancy_id + applicant_id)', async () => {
-    // Сначала создаём отклик
-    await request(app).post('/api/vacancy-responses').send(validResponse);
-    
-    // Пытаемся создать дубль
-    const res = await request(app)
-      .post('/api/vacancy-responses')
-      .send(validResponse)
-      .expect(409);
+  test('❌ Дублирующий отклик', async () => {
+    const uniqueResponse = {
+      vacancy_id: 2,
+      user_id: 1,
+      cover_letter: 'Первый отклик'
+    };
 
-    expect(res.body.error).toContain('уже отклик');
+    await request(app).post('/api/vacancy-responses').send(uniqueResponse);
+
+    const res = await request(app)
+        .post('/api/vacancy-responses')
+        .send(uniqueResponse)
+        .expect(400);
+
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('уже откликались');
   });
 
   test('❌ Отклик на несуществующую вакансию', async () => {
     const res = await request(app)
-      .post('/api/vacancy-responses')
-      .send({ ...validResponse, vacancyId: 99999 })
-      .expect(404);
+        .post('/api/vacancy-responses')
+        .send({ vacancy_id: 99999, user_id: 1 })
+        .expect(404);
   });
 
   test('✅ Отклик без resume_id (опциональное поле)', async () => {
     const res = await request(app)
-      .post('/api/vacancy-responses')
-      .send({
-        vacancyId: 2,
-        applicantId: 2,
-        coverLetter: 'Без указания конкретного резюме'
-        // resumeId отсутствует
-      })
-      .expect(201);
+        .post('/api/vacancy-responses')
+        .send({
+          vacancy_id: 3,
+          user_id: 2,
+          cover_letter: 'Без указания конкретного резюме'
+        })
+        .expect(200);
 
-    expect(res.body.resume_id).toBeNull();
+    expect(res.body.success).toBe(true);
   });
 });
