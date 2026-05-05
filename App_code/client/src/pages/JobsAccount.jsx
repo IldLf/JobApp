@@ -942,12 +942,12 @@ const JobsAccount = ({user, onLogout}) => {
                                                     onClick={() => handleEditResume(resume)}>
                                                 Редактировать
                                             </button>
-                                            <button
+                                            {/*<button
                                                 className="item-action-btn"
                                                 onClick={() => handleBoostResume(resume.id)}
                                             >
                                                 ⬆️ Повысить
-                                            </button>
+                                            </button> */}
 
                                             <button
                                                 className={`item-action-btn ${!resume.is_active ? 'btn-warning' : ''}`}
@@ -1064,7 +1064,7 @@ const JobsAccount = ({user, onLogout}) => {
                                                 </span>
                                             </div>
                                             <div className="item-company">{response.name}</div>
-                                            <div className="item-meta">{formattedDate}</div>
+                                            <div className="item-meta">{formattedDate} • {response.email} • {response.phone}</div>
                                             <div className="vacancy-description">{response.message}</div>
                                             <div className="item-actions">
                                                 {response.status !== 'accepted' && (
@@ -1314,25 +1314,7 @@ const JobsAccount = ({user, onLogout}) => {
                         </div>
 
                         {/* Уведомления */}
-                        <div className="settings-section">
-                            <h3 className="settings-title">Уведомления</h3>
-
-                            {NOTIFICATIONS.map(notif => (
-                                <div key={notif.id} className="notification-row">
-                                    <div className="notification-info">
-                                        <h4>{notif.title}</h4>
-                                        <p>{notif.description}</p>
-                                    </div>
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            defaultChecked={notif.defaultChecked}
-                                        />
-                                        <span className="slider"></span>
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
+                        
 
                         {/* Кнопки действий */}
                         <div style={{display: 'flex', gap: '15px', marginTop: '30px'}}>

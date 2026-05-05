@@ -403,12 +403,15 @@ app.get('/api/applicant/resume_responses/:userId', async (req, res) => {
                    c.name,
                    rr.message,
                    rr.status,
-                   rr.created_at
+                   rr.created_at,
+                   u2.email,
+                   u2.phone
             FROM resumes r
                      JOIN resume_responses rr ON r.id = rr.resume_id
                      JOIN companies c ON c.id = rr.company_id
                      JOIN applicants a ON r.applicant_id = a.id
                      JOIN users u ON u.id = a.user_id
+                     JOIN users u2 ON u2.id = c.user_id
             WHERE u.id = ?
               AND u.user_type = 'applicant'
         `;

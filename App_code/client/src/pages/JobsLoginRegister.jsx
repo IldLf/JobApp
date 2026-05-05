@@ -196,9 +196,6 @@ const JobsLoginRegister = ({onLoginSuccess, onRegisterSuccess}) => {
                                     onChange={(e) => setLoginData({...loginData, password: e.target.value})}
                                     disabled={loading}
                                 />
-                                <a href="#" className="forgot-password" onClick={handleForgotPassword}>
-                                    Забыли пароль?
-                                </a>
                             </div>
                             <button type="submit" className="btn">Войти</button>
                         </form>
