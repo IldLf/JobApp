@@ -25,32 +25,6 @@ const PROFESSIONS = [
     {value: '6', label: 'Fullstack разработчик'}
 ];
 
-const NOTIFICATIONS = [
-    {
-        id: 1,
-        title: 'Новые вакансии по подписке',
-        description: 'Получать уведомления о новых вакансиях, соответствующих вашему профилю',
-        defaultChecked: true
-    },
-    {
-        id: 2,
-        title: 'Отклики на вакансии',
-        description: 'Уведомления о статусе ваших откликов',
-        defaultChecked: true
-    },
-    {
-        id: 3,
-        title: 'Приглашения от компаний',
-        description: 'Уведомления о новых приглашениях',
-        defaultChecked: true
-    },
-    {
-        id: 4,
-        title: 'Новости и обновления',
-        description: 'Информационные рассылки от сервиса',
-        defaultChecked: false
-    }
-];
 
 const TABS = [
     {id: 'resumes', label: 'Мои резюме'},
@@ -113,21 +87,6 @@ const formatPhoneForDisplay = (phone) => {
     let digits = phone.replace(/\D/g, '');
 
     return `${digits}`;
-};
-
-const formatPhoneInput = (phone) => {
-    if (!phone) return null;
-    let digits = phone.replace(/\D/g, '');
-
-    if (digits.length === 11 && digits[0] === '8') {
-        digits = '7' + digits.slice(1);
-    }
-
-    if (digits.length === 10) {
-        digits = '7' + digits;
-    }
-
-    return digits.length === 11 ? `+${digits}` : null;
 };
 
 const formatPhoneForServer = (phone) => {
@@ -542,25 +501,6 @@ const JobsAccount = ({user, onLogout}) => {
         setTimeout(() => setMessage(prev => ({...prev, visible: false})), 3000);
     };
 
-    const handleAction = (action) => {
-        showMessage(`${action} (демо-режим)`);
-    };
-
-    const handleInviteStatus = (status) => {
-        switch (status) {
-            case 'accepted':
-                return "Принято";
-            case 'viewed':
-                return "Просмотрено";
-            case 'pending':
-                return "В ожидании";
-            case 'rejected':
-                return "Отклонено";
-            default:
-                return 'Неизвестный статус';
-        }
-    }
-
     // Открытие формы создания резюме
     const handleCreateResume = () => {
         setResumeToEdit(null);
@@ -615,26 +555,6 @@ const JobsAccount = ({user, onLogout}) => {
             console.error('Error toggling resume status:', error);
             alert('Ошибка соединения с сервером');
         }
-    };
-
-    // "Повысить" резюме — только визуальный порядок (без БД)
-    const handleBoostResume = (resumeId) => {
-        setUserResumeData(prev => {
-            // Находим индекс резюме
-            const index = prev.findIndex(r => r.id === resumeId);
-            if (index <= 0) return prev; // уже наверху
-
-            // Копируем массив
-            const newArray = [...prev];
-            // Вырезаем элемент
-            const [boosted] = newArray.splice(index, 1);
-            // Вставляем в начало
-            newArray.unshift(boosted);
-
-            return newArray;
-        });
-
-        showMessage('Резюме поднято в списке');
     };
 
     // Открытие формы создания вакансии

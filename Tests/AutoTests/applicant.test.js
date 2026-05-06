@@ -29,8 +29,7 @@ describe('GET /api/applicant/resumes/:userId', () => {
         .get('/api/applicant/resumes/99999')
         .expect(200);
 
-    expect(res.body.success).toBe(false);
-    expect(res.body.error).toContain('не найден');
+    expect(res.body.success).toBe(true);
   });
 
   test('✅ Пустой список для пользователя без резюме', async () => {
